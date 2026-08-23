@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1a1c20">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%92%A3</text></svg>">
 <title>Projeto: DESARME</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Teko:wght@500;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
@@ -10,7 +12,7 @@
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+import { getDatabase, ref, set, update, get, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyACkQvVLWyCItyEjPaMRpYSgsP2luAq2WQ",
@@ -23,7 +25,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-window.__fb = { db: getDatabase(app), ref, set, get, onValue };
+window.__fb = { db: getDatabase(app), ref, set, update, get, onValue, onDisconnect };
 window.dispatchEvent(new Event("firebase-ready"));
 </script>
 
@@ -50,31 +52,49 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000;
 /* =========================================================
    UI GERAL (LOBBY)
 ========================================================= */
-.container { padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+.container { padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%; overflow-y: auto; }
 h1 { font-family: 'Teko', sans-serif; font-size: 4rem; text-align: center; color: var(--red); text-transform: uppercase; line-height: 1; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,0,0,0.5); }
 .subtitle { text-align: center; color: #aaa; margin-bottom: 30px; letter-spacing: 2px; }
 
 input, select, button { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1.2rem; font-family: 'Teko', sans-serif; text-transform: uppercase; }
 input, select { background: #222; color: #fff; border: 2px solid #444; outline: none; }
-button { background: var(--red); color: white; cursor: pointer; font-size: 1.5rem; transition: 0.2s; box-shadow: 0 5px 0 #990000; }
+button { background: var(--red); color: white; cursor: pointer; font-size: 1.5rem; transition: 0.15s; box-shadow: 0 5px 0 #990000; }
 button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
+button:disabled { opacity: 0.5; cursor: wait; }
+
+.level-hint { text-align: center; color: var(--yellow); font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; margin: -8px 0 15px; letter-spacing: 1px; }
+
+details.howto { background: #1a1a1a; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; color: #aaa; }
+details.howto summary { color: #fff; font-family: 'Teko'; font-size: 1.3rem; cursor: pointer; letter-spacing: 1px; }
+details.howto p { font-size: 0.95rem; line-height: 1.5; }
 
 .room-display { font-family: 'Share Tech Mono', monospace; font-size: 3.5rem; text-align: center; color: var(--yellow); letter-spacing: 10px; margin: 20px 0; background: #111; padding: 20px; border-radius: 10px; border: 2px dashed #555; }
+.copy-btn { background: #222; color: var(--yellow); box-shadow: 0 5px 0 #443800; font-size: 1.1rem; }
 
 /* =========================================================
    TELA DO DESARMADOR (THEME BOMB)
 ========================================================= */
 .theme-bomb { background: var(--bg-bomb); box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
-.bomb-header { display: flex; justify-content: space-between; padding: 15px 20px; background: #111; border-bottom: 4px solid #333; align-items: center; }
+.bomb-header { display: flex; justify-content: space-between; padding: 15px 20px; background: #111; border-bottom: 4px solid #333; align-items: center; z-index: 5; }
 .timer-display { font-family: 'Share Tech Mono', monospace; font-size: 1.5rem; color: var(--red); text-shadow: 0 0 5px rgba(255,0,0,0.8); }
 .strikes-display { font-size: 2rem; letter-spacing: 5px; }
-.strike { color: #333; }
+.strike { color: #333; transition: 0.2s; }
 .strike.active { color: var(--red); text-shadow: 0 0 10px red; }
+.mute-btn { background: none; border: none; color: #888; font-size: 1.3rem; width: auto; padding: 5px 10px; margin: 0; box-shadow: none; cursor: pointer; }
+.mute-btn:active { transform: none; }
 
-.bomb-module { flex: 1; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--metal); margin: 20px; border-radius: 15px; border: 5px solid #444; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5); position: relative; }
+.bomb-module { flex: 1; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--metal); margin: 20px; border-radius: 15px; border: 5px solid #444; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5); position: relative; overflow-y: auto; }
 .module-title { position: absolute; top: 10px; left: 15px; font-family: 'Share Tech Mono'; font-size: 0.9rem; color: #888; text-transform: uppercase; }
 
-/* Pistas Visuais (NOVO) */
+/* Overlay de perigo (tensão sem revelar o tempo exato) */
+#danger-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0; box-shadow: inset 0 0 0 0 rgba(255,0,0,0); }
+#danger-overlay.active { opacity: 1; animation: dangerPulse 1s infinite; }
+@keyframes dangerPulse {
+    0%, 100% { box-shadow: inset 0 0 60px 10px rgba(255,0,0,0.15); }
+    50% { box-shadow: inset 0 0 120px 30px rgba(255,0,0,0.55); }
+}
+
+/* Pistas Visuais */
 #visual-clue-area { margin-top: 30px; width: 100%; display: flex; justify-content: center; }
 .hardware-panel { width: 100%; max-width: 250px; height: 80px; background: #111; border: 3px solid #222; position: relative; cursor: pointer; display: flex; align-items: center; justify-content: space-evenly; overflow: hidden; border-radius: 5px; box-shadow: inset 0 0 10px #000; }
 .hardware-cover { position: absolute; inset: 0; background: #444; display: flex; align-items: center; justify-content: center; font-family: 'Share Tech Mono'; color: #aaa; transition: transform 0.4s cubic-bezier(0.5, 0, 0, 1); z-index: 2; border: 2px dashed #666; font-size: 0.9rem; }
@@ -99,10 +119,13 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 .switch.up .switch-knob { top: 2px; background: #888; }
 .switch.down .switch-knob { top: 42px; background: #444; }
 .submit-btn { margin-top: 20px; background: var(--yellow); color: #000; box-shadow: 0 5px 0 #b38f00; max-width: 200px; }
+.submit-btn.wrong { animation: shakeBtn 0.3s; }
+@keyframes shakeBtn { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
 
 /* Wires (Fase 3) */
 .wires-container { display: flex; flex-direction: column; gap: 15px; width: 100%; padding: 20px; }
-.wire { height: 25px; width: 100%; border-radius: 12px; cursor: pointer; position: relative; box-shadow: inset 0 5px 10px rgba(255,255,255,0.2), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.5); }
+.wire { height: 25px; width: 100%; border-radius: 12px; cursor: pointer; position: relative; box-shadow: inset 0 5px 10px rgba(255,255,255,0.2), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.5); transition: transform 0.15s; }
+.wire:active { transform: scale(0.98); }
 .wire::before, .wire::after { content: ''; position: absolute; top: -5px; width: 15px; height: 35px; background: #111; border: 2px solid #333; }
 .wire::before { left: -10px; border-radius: 5px 0 0 5px; }
 .wire::after { right: -10px; border-radius: 0 5px 5px 0; }
@@ -113,45 +136,59 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 ========================================================= */
 .theme-terminal { background: var(--terminal-bg); color: var(--terminal-green); font-family: 'Share Tech Mono', monospace; }
 .theme-terminal::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 2; background-size: 100% 4px, 6px 100%; pointer-events: none; }
-.terminal-header { display: flex; justify-content: space-between; padding: 15px 20px; border-bottom: 2px solid var(--terminal-green); z-index: 3; position: relative; background: #020802; }
+.terminal-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 2px solid var(--terminal-green); z-index: 3; position: relative; background: #020802; }
 .terminal-timer { font-size: 2.5rem; text-shadow: 0 0 8px var(--terminal-green); }
+.phase-badge { z-index: 3; position: relative; text-align: center; padding: 6px; background: rgba(51,255,51,0.08); border-bottom: 1px dashed var(--terminal-green); font-size: 0.9rem; letter-spacing: 1px; }
 .manual-content { padding: 20px; overflow-y: auto; z-index: 3; position: relative; flex: 1; font-size: 1.1rem; line-height: 1.6; }
 .manual-content h2 { border-bottom: 1px dashed var(--terminal-green); padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; color: #fff; }
 .manual-content ul, .manual-content ol { padding-left: 20px; }
 .manual-content li { margin-bottom: 10px; }
+.manual-section { padding: 10px 12px; border-left: 3px solid transparent; margin-bottom: 8px; transition: 0.4s; opacity: 0.5; border-radius: 0 6px 6px 0; }
+.manual-section.active-phase { border-left-color: var(--terminal-green); background: rgba(51,255,51,0.07); opacity: 1; box-shadow: 0 0 15px rgba(51,255,51,0.1); }
 .blink { animation: blinker 1s linear infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
 .panic { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; border: 5px solid red; box-shadow: inset 0 0 50px red; }
 @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
 #screen-end { background: #000; justify-content: center; align-items: center; text-align: center; z-index: 100; }
-#end-msg { font-family: 'Teko'; font-size: 6rem; text-transform: uppercase; line-height: 1; margin-bottom: 20px; }
+#end-msg { font-family: 'Teko'; font-size: 6rem; text-transform: uppercase; line-height: 1; margin-bottom: 20px; position: relative; z-index: 2; }
 .win { color: var(--green); text-shadow: 0 0 30px var(--green); }
 .lose { color: var(--red); text-shadow: 0 0 30px var(--red); }
+#end-canvas { position: absolute; inset: 0; z-index: 1; }
+#end-sub { position: relative; z-index: 2; }
 </style>
 </head>
 <body>
+
+<!-- OVERLAY DE PERIGO (só aparece na tela do desarmador) -->
+<div id="danger-overlay"></div>
 
 <!-- TELA LOBBY -->
 <div id="screen-lobby" class="screen active">
     <div class="container">
         <h1>DESARME</h1>
         <p class="subtitle">O tempo corre solto, as regras nem sempre.</p>
-        
+
+        <details class="howto">
+            <summary>❓ Como jogar</summary>
+            <p>Um jogador vira o <b>Desarmador</b> e olha a bomba, mas não sabe as regras. O outro vira o <b>Instrutor</b>, lê o manual secreto, mas não vê a bomba. Comuniquem-se em voz alta e desarmem antes do tempo (e das 3 chances) acabar!</p>
+        </details>
+
         <div style="background: #1a1a1a; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
             <h3 style="margin-top:0; color:#888; font-family:'Teko';">CRIAR NOVA MISSÃO</h3>
-            <select id="select-level">
+            <select id="select-level" onchange="updateLevelHint()">
                 <option value="1">Nível 1: Treinamento Lógico</option>
                 <option value="2">Nível 2: Criptografia Oculta</option>
                 <option value="3">Nível 3: Matemática do Caos</option>
                 <option value="4">Nível 4: Sem Esperança</option>
             </select>
-            <button onclick="createRoom()">SOU O DESARMADOR (BOMBA)</button>
+            <div class="level-hint" id="level-hint">⏱ Tempo estimado: ~4 min</div>
+            <button id="btn-create" onclick="createRoom()">SOU O DESARMADOR (BOMBA)</button>
         </div>
         <div style="text-align: center; margin-bottom: 10px; color:#666;">OU</div>
         <div style="background: #1a1a1a; padding: 20px; border-radius: 10px;">
             <h3 style="margin-top:0; color:#888; font-family:'Teko';">ENTRAR COMO ESPECIALISTA</h3>
             <input type="text" id="input-code" placeholder="CÓDIGO DA SALA" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
-            <button onclick="joinRoom()" style="background: var(--blue); box-shadow: 0 5px 0 #0088aa;">ABRIR MANUAL (INSTRUTOR)</button>
+            <button id="btn-join" onclick="joinRoom()" style="background: var(--blue); box-shadow: 0 5px 0 #0088aa;">ABRIR MANUAL (INSTRUTOR)</button>
         </div>
     </div>
 </div>
@@ -161,6 +198,7 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
     <div class="container">
         <h2 style="text-align: center; color: #888;">INFORME ESTE CÓDIGO AO SEU INSTRUTOR:</h2>
         <div class="room-display" id="display-code">----</div>
+        <button class="copy-btn" onclick="copyCode()">📋 COPIAR CÓDIGO</button>
         <p class="subtitle blink">Aguardando conexão segura...</p>
     </div>
 </div>
@@ -174,18 +212,14 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
             <span class="strike" id="strike-3">X</span>
         </div>
         <div class="timer-display blink" id="bomb-timer">TEMPO: OCULTO</div>
+        <button class="mute-btn" onclick="toggleSound()" id="mute-btn-bomb">🔊</button>
     </div>
-    
+
     <!-- MÓDULO 1: COFRE -->
     <div class="bomb-module" id="module-1" style="display:none;">
         <div class="module-title">Módulo 1: Trava de Segurança</div>
-        
-        <!-- Pistas Visuais Substituindo o texto -->
         <div id="visual-clue-area"></div>
-        
-        <div class="combo-lock" id="safe-combo">
-            <!-- Gerado via JS -->
-        </div>
+        <div class="combo-lock" id="safe-combo"></div>
         <button class="submit-btn" onclick="checkSafe()">DESTRAVAR</button>
     </div>
 
@@ -193,55 +227,106 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
     <div class="bomb-module" id="module-2" style="display:none;">
         <div class="module-title">Módulo 2: Ponte Lógica</div>
         <div id="clue-briefcase" style="font-family:'Share Tech Mono'; color:#aaa; margin-top:20px;"></div>
-        
-        <div class="switch-container" id="briefcase-switches">
-            <!-- Gerado via JS -->
-        </div>
+        <div class="switch-container" id="briefcase-switches"></div>
         <button class="submit-btn" onclick="checkBriefcase()">VALIDAR CIRCUITO</button>
     </div>
 
     <!-- MÓDULO 3: FIOS -->
     <div class="bomb-module" id="module-3" style="display:none;">
         <div class="module-title">Módulo 3: Detonador Central</div>
-        
-        <div class="wires-container" id="bomb-wires">
-            <!-- Gerado via JS -->
-        </div>
+        <div class="wires-container" id="bomb-wires"></div>
     </div>
 </div>
 
 <!-- TELA INSTRUTOR (MANUAL) -->
 <div id="screen-manual" class="screen theme-terminal">
     <div class="terminal-header">
-        <div>SYS_MANUAL_V5.2</div>
+        <div>SYS_MANUAL_V6.0</div>
         <div class="terminal-timer" id="manual-timer">00:00</div>
+        <button class="mute-btn" onclick="toggleSound()" id="mute-btn-manual" style="color:var(--terminal-green);">🔊</button>
     </div>
-    <div class="manual-content" id="manual-text">
-        <!-- Injetado via JS -->
-    </div>
+    <div class="phase-badge" id="phase-badge">🎯 FOCO ATUAL: MÓDULO 1</div>
+    <div class="manual-content" id="manual-text"></div>
 </div>
 
 <!-- TELA FIM DE JOGO -->
 <div id="screen-end" class="screen">
+    <canvas id="end-canvas"></canvas>
     <div class="container" style="align-items: center;">
         <div id="end-msg">BOOM!</div>
         <p id="end-sub" style="font-size: 1.5rem; color:#aaa; margin-bottom: 40px;"></p>
-        <button onclick="location.reload()" style="max-width: 300px;">NOVA MISSÃO</button>
+        <button onclick="location.reload()" style="max-width: 300px; position:relative; z-index:2;">NOVA MISSÃO</button>
     </div>
 </div>
 
 <script>
 const COLORS = { R: 'var(--red)', G: 'var(--green)', B: 'var(--blue)', Y: 'var(--yellow)', W: '#ffffff', K: '#222' };
 const GREEK_SYMBOLS = ['Ω', 'Δ', 'Φ', 'Σ', 'Ѱ', 'Λ'];
+const LEVEL_TIME_HINT = { 1: '~4 min', 2: '~3 min', 3: '~2 min', 4: '~1 min (IMPOSSÍVEL)' };
 
 /* ESTADO LOCAL */
 let roomCode = null;
 let roomData = null;
-let myRole = null; 
+let myRole = null;
 let timerInterval = null;
-let localEndTime = 0; 
-let safeState = [0, 0, 0]; 
-let safeType = 'numbers'; 
+let localEndTime = 0;
+let safeState = [0, 0, 0];
+let safeType = 'numbers';
+let dangerSent = false;
+let lastTickSecond = -1;
+let soundEnabled = true;
+
+/* =========================================================
+   ÁUDIO E FEEDBACK (Web Audio API, sem assets externos)
+========================================================= */
+let audioCtx = null;
+function ensureAudio() {
+    if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+        catch (e) { audioCtx = null; }
+    } else if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+function tone(freq, dur, type = 'square', vol = 0.15, delay = 0) {
+    if (!soundEnabled || !audioCtx) return;
+    const t0 = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(vol, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur);
+}
+function noiseBurst(dur, vol = 0.3) {
+    if (!soundEnabled || !audioCtx) return;
+    const bufferSize = audioCtx.sampleRate * dur;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    src.connect(gain).connect(audioCtx.destination);
+    src.start();
+}
+function clickSound() { tone(600, 0.05, 'square', 0.08); }
+function tickSound(urgent) { tone(urgent ? 1100 : 800, 0.06, 'sine', urgent ? 0.18 : 0.08); }
+function strikeSound() { tone(220, 0.25, 'sawtooth', 0.25); tone(140, 0.35, 'sawtooth', 0.2, 0.08); }
+function explosionSound() { noiseBurst(1.2, 0.4); tone(60, 1.2, 'sawtooth', 0.3); }
+function victorySound() {
+    [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.4, 'triangle', 0.18, i * 0.12));
+}
+function vibrate(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const icon = soundEnabled ? '🔊' : '🔇';
+    ['mute-btn-bomb', 'mute-btn-manual'].forEach(id => { const el = document.getElementById(id); if (el) el.innerText = icon; });
+}
 
 /* =========================================================
    GERAÇÃO DE LÓGICA DO PUZZLE ALEATÓRIO
@@ -250,41 +335,43 @@ function generatePuzzleVars(level) {
     const vars = {};
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const rndInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-    
-    if(level == 1) vars.timeAllocated = rndInt(210, 270); // 3.5 a 4.5 mins
-    else if(level == 2) vars.timeAllocated = rndInt(150, 180); // 2.5 a 3 mins
-    else if(level == 3) vars.timeAllocated = rndInt(100, 130); // ~2 mins
-    else if(level == 4) vars.timeAllocated = rndInt(60, 90); // 1 a 1.5 min
+
+    if (level == 1) vars.timeAllocated = rndInt(210, 270);
+    else if (level == 2) vars.timeAllocated = rndInt(150, 180);
+    else if (level == 3) vars.timeAllocated = rndInt(100, 130);
+    else if (level == 4) vars.timeAllocated = rndInt(60, 90);
 
     if (level == 1) {
         vars.bat = rnd([2, 3, 4]);
-        vars.safeTarget = `${vars.bat}${vars.bat * 2}${vars.bat - 1}`; 
-        vars.briefcaseTarget = "101"; 
-        vars.wireColors = ['R', 'B', 'Y'].sort(()=>Math.random()-0.5);
-        vars.wireTarget = vars.wireColors.indexOf('Y'); 
-    } 
+        vars.safeTarget = `${vars.bat}${vars.bat * 2}${vars.bat - 1}`;
+        vars.briefcaseTarget = "101";
+        vars.wireColors = ['R', 'B', 'Y'].sort(() => Math.random() - 0.5);
+        vars.wireTarget = vars.wireColors.indexOf('Y');
+    }
     else if (level == 2) {
         vars.led = rnd(['R', 'B']);
         vars.safeTarget = vars.led === 'R' ? '012' : '345';
         vars.briefcaseTarget = vars.led === 'R' ? '1100' : '0011';
-        vars.wireColors = [rnd(['R','Y']), rnd(['G','Y']), 'B', rnd(['R','G'])].sort(()=>Math.random()-0.5);
-        vars.wireTarget = vars.wireColors.indexOf('B'); 
+        vars.wireColors = [rnd(['R', 'Y']), rnd(['G', 'Y']), 'B', rnd(['R', 'G'])].sort(() => Math.random() - 0.5);
+        vars.wireTarget = vars.wireColors.indexOf('B');
     }
     else if (level == 3) {
         vars.sn = rnd([342, 484, 715, 931]);
         const isEven = vars.sn % 2 === 0;
-        vars.safeTarget = isEven ? (vars.sn / 2).toString().padStart(3,'0') : vars.sn.toString().split('').reverse().join('');
+        vars.safeTarget = isEven ? (vars.sn / 2).toString().padStart(3, '0') : vars.sn.toString().split('').reverse().join('');
         vars.word = rnd(['AGUA', 'FOGO']);
         vars.briefcaseTarget = vars.word === 'AGUA' ? '0110' : '1001';
-        vars.wires = ['R', 'B', 'G', 'Y', 'W'].sort(()=>Math.random()-0.5);
-        vars.wireTarget = isEven ? 2 : 4; 
+        vars.wires = ['R', 'B', 'G', 'Y', 'W'].sort(() => Math.random() - 0.5);
+        vars.wireTarget = isEven ? 2 : 4;
     }
     else if (level == 4) {
         vars.code = rnd(['666', '999', '000']);
         vars.safeTarget = vars.code;
-        vars.briefcaseTarget = "000"; 
-        vars.wires = ['K','K','K','K','K','K']; 
-        vars.wireTarget = rnd([1, 2, 3, 5]); 
+        vars.briefcaseTarget = "000";
+        vars.wires = ['K', 'K', 'K', 'K', 'K', 'K'];
+        // CORRIGIDO: fios 2, 3 e 5 (numeração 1-6 exibida no manual) são primos.
+        // Em índice 0-based isso equivale a 1, 2 e 4 — não [1,2,3,5] como estava antes.
+        vars.wireTarget = rnd([1, 2, 4]);
     }
     return vars;
 }
@@ -302,47 +389,90 @@ function showScreen(id) {
     document.getElementById(id).classList.add('active');
 }
 
+function updateLevelHint() {
+    const lvl = document.getElementById('select-level').value;
+    document.getElementById('level-hint').innerText = '⏱ Tempo estimado: ' + LEVEL_TIME_HINT[lvl];
+}
+
+function copyCode() {
+    if (!roomCode) return;
+    navigator.clipboard?.writeText(roomCode).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        const old = btn.innerText;
+        btn.innerText = '✅ COPIADO!';
+        setTimeout(() => btn.innerText = old, 1500);
+    }).catch(() => alert('Código: ' + roomCode));
+}
+
 async function createRoom() {
+    ensureAudio();
+    const btn = document.getElementById('btn-create');
+    btn.disabled = true; btn.innerText = 'ARMANDO...';
     await waitForFirebase();
     const lvl = parseInt(document.getElementById('select-level').value);
-    roomCode = genCode();
     myRole = 'defuser';
-    
-    const rData = { code: roomCode, status: 'waiting', level: lvl, strikes: 0, phase: 1, vars: generatePuzzleVars(lvl) };
-    
+
+    // Evita colisão de códigos de sala
+    let code, exists = true, attempts = 0;
+    do {
+        code = genCode();
+        const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'rooms/' + code));
+        exists = snap.exists();
+        attempts++;
+    } while (exists && attempts < 5);
+    roomCode = code;
+
+    const rData = { code: roomCode, status: 'waiting', level: lvl, strikes: 0, phase: 1, danger: false, vars: generatePuzzleVars(lvl) };
     await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), rData);
+
     document.getElementById('display-code').innerText = roomCode;
     showScreen('screen-waiting');
     startListening();
 }
 
 async function joinRoom() {
+    ensureAudio();
+    const btn = document.getElementById('btn-join');
+    const code = document.getElementById('input-code').value.toUpperCase().trim();
+    if (code.length !== 4) return alert("Código inválido. Deve ter 4 caracteres.");
+    btn.disabled = true; btn.innerText = 'CONECTANDO...';
     await waitForFirebase();
-    const code = document.getElementById('input-code').value.toUpperCase();
-    if(code.length !== 4) return alert("Código inválido.");
-    
-    const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'rooms/' + code));
-    if (snap.exists()) {
-        const data = snap.val();
-        if (data.status === 'waiting') {
-            roomCode = code;
-            myRole = 'manual';
-            await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + code), { ...data, status: 'playing' });
-            startListening();
-        } else { alert("Sala já em andamento."); }
-    } else { alert("Sala não encontrada."); }
+
+    try {
+        const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'rooms/' + code));
+        if (snap.exists()) {
+            const data = snap.val();
+            if (data.status === 'waiting') {
+                roomCode = code;
+                myRole = 'manual';
+                await window.__fb.update(window.__fb.ref(window.__fb.db, 'rooms/' + code), { status: 'playing' });
+                startListening();
+            } else {
+                alert("Sala já em andamento ou finalizada.");
+                btn.disabled = false; btn.innerText = 'ABRIR MANUAL (INSTRUTOR)';
+            }
+        } else {
+            alert("Sala não encontrada. Confira o código com o Desarmador.");
+            btn.disabled = false; btn.innerText = 'ABRIR MANUAL (INSTRUTOR)';
+        }
+    } catch (e) {
+        alert("Falha de conexão. Verifique sua internet e tente novamente.");
+        btn.disabled = false; btn.innerText = 'ABRIR MANUAL (INSTRUTOR)';
+    }
 }
 
 function startListening() {
     window.__fb.onValue(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), snap => {
         if (!snap.exists()) return;
         const oldPhase = roomData ? roomData.phase : 1;
+        const oldStrikes = roomData ? roomData.strikes : 0;
+        const oldDanger = roomData ? roomData.danger : false;
         roomData = snap.val();
-        
+
         if (roomData.status === 'playing') {
             if (localEndTime === 0) {
                 localEndTime = Date.now() + (roomData.vars.timeAllocated * 1000);
-                safeState = [0,0,0]; // Reset do cofre a cada jogo novo
+                safeState = [0, 0, 0];
             }
 
             if (myRole === 'defuser') {
@@ -352,20 +482,35 @@ function startListening() {
                 showScreen('screen-manual');
                 renderManualScreen();
             }
-            if(!timerInterval) timerInterval = setInterval(updateTimer, 100);
-            
-            if (roomData.strikes > 0) {
-                document.getElementById('strike-' + roomData.strikes).classList.add('active');
-                if(myRole === 'defuser') {
+            if (!timerInterval) timerInterval = setInterval(updateTimer, 100);
+
+            // Sincroniza visual das strikes sempre (mas só dispara efeito no INCREMENTO real)
+            for (let i = 1; i <= 3; i++) {
+                const el = document.getElementById('strike-' + i);
+                if (el) el.classList.toggle('active', i <= roomData.strikes);
+            }
+            if (roomData.strikes > oldStrikes) {
+                strikeSound();
+                vibrate([180]);
+                if (myRole === 'defuser') {
                     document.body.classList.add('panic');
-                    setTimeout(()=>document.body.classList.remove('panic'), 500);
+                    setTimeout(() => document.body.classList.remove('panic'), 500);
                 }
             }
-            
-            if(roomData.phase > oldPhase && myRole === 'defuser') {
-                document.body.classList.add('panic'); 
-                document.body.style.borderColor = "var(--green)";
-                setTimeout(()=> { document.body.classList.remove('panic'); document.body.style.borderColor = ""; }, 500);
+
+            if (roomData.phase > oldPhase) {
+                if (myRole === 'defuser') {
+                    document.body.classList.add('panic');
+                    document.body.style.borderColor = "var(--green)";
+                    setTimeout(() => { document.body.classList.remove('panic'); document.body.style.borderColor = ""; }, 500);
+                }
+                tone(500, 0.15, 'triangle', 0.15);
+                tone(700, 0.2, 'triangle', 0.15, 0.1);
+            }
+
+            if (roomData.danger && !oldDanger && myRole === 'defuser') {
+                document.getElementById('danger-overlay').classList.add('active');
+                vibrate([100, 50, 100]);
             }
         }
         else if (roomData.status === 'exploded') endGame(false);
@@ -374,16 +519,17 @@ function startListening() {
 }
 
 function sendAction(actionObj) {
-    window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), { ...roomData, ...actionObj });
+    // Usa update() (não set()) para não sobrescrever mudanças concorrentes do outro jogador
+    window.__fb.update(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), actionObj);
 }
 
 /* =========================================================
    TIMER & GAME OVER
 ========================================================= */
 function updateTimer() {
-    if(!roomData || roomData.status !== 'playing' || localEndTime === 0) return;
+    if (!roomData || roomData.status !== 'playing' || localEndTime === 0) return;
     const left = Math.max(0, localEndTime - Date.now());
-    
+
     if (left === 0) {
         clearInterval(timerInterval);
         if (myRole === 'defuser' && roomData.status === 'playing') {
@@ -391,18 +537,31 @@ function updateTimer() {
         }
         return;
     }
-    
-    if(myRole === 'manual') {
+
+    if (myRole === 'manual') {
         const mins = Math.floor(left / 60000);
         const secs = Math.floor((left % 60000) / 1000);
         const ms = Math.floor((left % 1000) / 10);
-        const text = (mins>0) ? 
-            `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}` : 
-            `${secs.toString().padStart(2,'0')}:${ms.toString().padStart(2,'0')}`;
-            
+        const text = (mins > 0) ?
+            `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}` :
+            `${secs.toString().padStart(2, '0')}:${ms.toString().padStart(2, '0')}`;
+
         const el = document.getElementById('manual-timer');
         el.innerText = text;
-        if(left < 30000) el.style.color = "var(--red)";
+        el.style.color = left < 30000 ? "var(--red)" : "";
+
+        // Tique-taque a cada segundo, mais urgente perto do fim
+        const currentSecond = Math.floor(left / 1000);
+        if (currentSecond !== lastTickSecond) {
+            lastTickSecond = currentSecond;
+            tickSound(left < 15000);
+        }
+
+        // Avisa o desarmador que o perigo está próximo (sem revelar o tempo exato)
+        if (left <= 15000 && !dangerSent) {
+            dangerSent = true;
+            sendAction({ danger: true });
+        }
     }
 }
 
@@ -413,35 +572,95 @@ function endGame(win) {
     msg.innerText = win ? 'BOMBA DESARMADA!' : 'BOOM!';
     msg.className = win ? 'win' : 'lose';
     document.getElementById('end-sub').innerText = win ? 'A cidade está a salvo.' : (roomData.reason || 'Sua comunicação falhou.');
+    if (win) { victorySound(); vibrate([80, 40, 80, 40, 200]); }
+    else { explosionSound(); vibrate([300, 100, 300]); }
+    runParticles(win ? 'confetti' : 'explosion');
 }
 
 function addStrike() {
     const newStrikes = roomData.strikes + 1;
+    const btn = event ? event.target : null;
+    if (btn) { btn.classList.add('wrong'); setTimeout(() => btn.classList.remove('wrong'), 300); }
     if (newStrikes >= 3) sendAction({ strikes: 3, status: 'exploded', reason: 'Erros demais ao manipular os módulos!' });
     else sendAction({ strikes: newStrikes });
+}
+
+/* =========================================================
+   PARTÍCULAS (confete / explosão) NO FIM DE JOGO
+========================================================= */
+function runParticles(type) {
+    const canvas = document.getElementById('end-canvas');
+    const ctx = canvas.getContext('2d');
+    const resize = () => { canvas.width = canvas.clientWidth; canvas.height = canvas.clientHeight; };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const particles = [];
+    const cx = canvas.width / 2, cy = canvas.height / 2;
+    const n = 80;
+    for (let i = 0; i < n; i++) {
+        if (type === 'confetti') {
+            particles.push({
+                x: Math.random() * canvas.width, y: -20 - Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 2, vy: 2 + Math.random() * 3,
+                size: 4 + Math.random() * 5, rot: Math.random() * 360, vrot: (Math.random() - 0.5) * 10,
+                color: ['#00ff66', '#ffcc00', '#00ccff', '#ff3333', '#fff'][Math.floor(Math.random() * 5)]
+            });
+        } else {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 2 + Math.random() * 8;
+            particles.push({
+                x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+                size: 2 + Math.random() * 5, life: 1,
+                color: ['#ff3333', '#ff9900', '#ffcc00', '#666'][Math.floor(Math.random() * 4)]
+            });
+        }
+    }
+
+    let frame = 0;
+    function loop() {
+        frame++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+            if (type === 'confetti') {
+                p.x += p.vx; p.y += p.vy; p.rot += p.vrot;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+                ctx.fillStyle = p.color; ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                ctx.restore();
+            } else {
+                p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.life -= 0.012;
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        });
+        if (frame < (type === 'confetti' ? 260 : 140)) requestAnimationFrame(loop);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+    loop();
 }
 
 /* =========================================================
    LÓGICA DA INTERFACE DO DESARMADOR
 ========================================================= */
 function renderBombScreen() {
-    [1,2,3].forEach(i => document.getElementById('module-'+i).style.display = 'none');
-    
+    [1, 2, 3].forEach(i => document.getElementById('module-' + i).style.display = 'none');
+
     const m = document.getElementById('module-' + roomData.phase);
     m.style.display = 'flex';
     const v = roomData.vars;
 
-    if (roomData.phase === 1) { 
+    if (roomData.phase === 1) {
         safeType = (roomData.level == 2) ? 'symbols' : 'numbers';
         const clueArea = document.getElementById('visual-clue-area');
-        
-        // Renderiza as pistas visuais físicas apenas se estiverem vazias
+
         if (clueArea.children.length === 0) {
             if (roomData.level == 1) {
                 let bats = '';
-                for(let i=0; i<v.bat; i++) bats += '<div class="battery"></div>';
+                for (let i = 0; i < v.bat; i++) bats += '<div class="battery"></div>';
                 clueArea.innerHTML = `
-                    <div class="hardware-panel" onclick="this.classList.add('open')">
+                    <div class="hardware-panel" onclick="this.classList.add('open'); clickSound();">
                         <div class="hardware-cover">🔧 ABRIR PAINEL DE ENERGIA</div>
                         ${bats}
                     </div>
@@ -470,11 +689,10 @@ function renderBombScreen() {
                 `;
             }
         }
-        
-        // Renderiza o Cadeado Rotativo (CORREÇÃO AQUI!)
+
         const pad = document.getElementById('safe-combo');
         if (pad.children.length === 0) {
-            for(let i=0; i<3; i++) {
+            for (let i = 0; i < 3; i++) {
                 const col = document.createElement('div');
                 col.className = 'combo-col';
                 col.innerHTML = `
@@ -486,32 +704,33 @@ function renderBombScreen() {
             }
         }
     }
-    else if (roomData.phase === 2) { 
+    else if (roomData.phase === 2) {
         const badge = document.getElementById('clue-briefcase');
-        if(roomData.level == 1) badge.innerHTML = 'INFO: PADRÃO V-43';
-        else if(roomData.level == 2) badge.innerHTML = 'SYNC COM SENSOR ANTERIOR';
-        else if(roomData.level == 3) badge.innerHTML = `TELA CENTRAL: [ ${v.word} ]`;
-        else if(roomData.level == 4) badge.innerHTML = 'OVERRIDE_REQ_ALL';
-        
+        if (roomData.level == 1) badge.innerHTML = 'INFO: PADRÃO V-43';
+        else if (roomData.level == 2) badge.innerHTML = 'SYNC COM SENSOR ANTERIOR';
+        else if (roomData.level == 3) badge.innerHTML = `TELA CENTRAL: [ ${v.word} ]`;
+        else if (roomData.level == 4) badge.innerHTML = 'OVERRIDE_REQ_ALL';
+
         const sw = document.getElementById('briefcase-switches');
-        if(sw.children.length === 0) {
+        if (sw.children.length === 0) {
             const numSwitches = (roomData.level == 1 || roomData.level == 4) ? 3 : 4;
-            for(let i=0; i<numSwitches; i++) {
+            for (let i = 0; i < numSwitches; i++) {
                 const w = document.createElement('div');
                 w.className = 'switch down';
-                w.dataset.pos = '0'; 
+                w.dataset.pos = '0';
                 w.innerHTML = '<div class="switch-knob"></div>';
                 w.onclick = () => {
                     w.classList.toggle('up'); w.classList.toggle('down');
                     w.dataset.pos = w.classList.contains('up') ? '1' : '0';
+                    clickSound();
                 };
                 sw.appendChild(w);
             }
         }
     }
-    else if (roomData.phase === 3) { 
+    else if (roomData.phase === 3) {
         const wc = document.getElementById('bomb-wires');
-        if(wc.children.length === 0) {
+        if (wc.children.length === 0) {
             v.wires.forEach((c, idx) => {
                 const w = document.createElement('div');
                 w.className = 'wire';
@@ -523,24 +742,21 @@ function renderBombScreen() {
     }
 }
 
-// Mecânica do Cadeado Rotativo
 function spinSafe(index, dir) {
+    clickSound();
     const max = safeType === 'numbers' ? 9 : (GREEK_SYMBOLS.length - 1);
     safeState[index] += dir;
-    
+
     if (safeState[index] > max) safeState[index] = 0;
     if (safeState[index] < 0) safeState[index] = max;
-    
+
     document.getElementById(`digit-${index}`).innerText = safeType === 'numbers' ? safeState[index] : GREEK_SYMBOLS[safeState[index]];
 }
 
 function checkSafe() {
     const currentCode = safeState.join('');
-    if (currentCode === roomData.vars.safeTarget) {
-        sendAction({ phase: 2 });
-    } else {
-        addStrike();
-    }
+    if (currentCode === roomData.vars.safeTarget) sendAction({ phase: 2 });
+    else addStrike();
 }
 
 function checkBriefcase() {
@@ -551,9 +767,10 @@ function checkBriefcase() {
 }
 
 function handleWireCut(el, idx) {
-    if(el.classList.contains('cut')) return;
+    if (el.classList.contains('cut')) return;
     el.classList.add('cut');
-    
+    clickSound();
+
     if (idx === roomData.vars.wireTarget) sendAction({ status: 'defused' });
     else addStrike();
 }
@@ -564,96 +781,97 @@ function handleWireCut(el, idx) {
 function renderManualScreen() {
     const mc = document.getElementById('manual-text');
     const lvl = roomData.level;
-    let html = "";
-    
-    if (lvl == 1) {
-        html = `
-        <h2>NÍVEL 1: TREINAMENTO LÓGICO</h2>
-        <p style="color:var(--yellow)">"Pergunte ao seu parceiro o que ele vê na tela dele. A comunicação salva vidas."</p>
-        
-        <h2>MÓDULO 1: CADEADO (3 DÍGITOS)</h2>
-        <p>Peça para ele <b>clicar na placa de metal</b> para abrir o painel de energia.</p>
-        <p>A senha matemática depende do número de <b>Baterias AA</b> reveladas lá dentro:</p>
-        <ul>
-            <li>Dígito 1: É exatamente a quantidade de baterias.</li>
-            <li>Dígito 2: É o dobro do primeiro dígito.</li>
-            <li>Dígito 3: É uma unidade a menos que o primeiro dígito.</li>
-        </ul>
 
-        <h2>MÓDULO 2: PONTE LÓGICA (3 ALAVANCAS)</h2>
-        <p>A regra de ouro da mecânica B-43: <i>"Os extremos sempre sobem para proteger o núcleo, que deve permanecer mergulhado no inferno."</i></p>
+    if (mc.dataset.builtFor != lvl) {
+        let intro = '', p1 = '', p2 = '', p3 = '';
 
-        <h2>MÓDULO 3: CORTE DE FIOS</h2>
-        <p>Existem 3 fios coloridos.</p>
-        <p><b>Diretriz:</b> Nunca confie no verde ácido ou no vermelho sangue. A salvação tem a cor da luz que clareia o dia (Sol).</p>
-        `;
+        if (lvl == 1) {
+            intro = `<h2>NÍVEL 1: TREINAMENTO LÓGICO</h2>
+            <p style="color:var(--yellow)">"Pergunte ao seu parceiro o que ele vê na tela dele. A comunicação salva vidas."</p>`;
+            p1 = `<h2>MÓDULO 1: CADEADO (3 DÍGITOS)</h2>
+            <p>Peça para ele <b>clicar na placa de metal</b> para abrir o painel de energia.</p>
+            <p>A senha matemática depende do número de <b>Baterias AA</b> reveladas lá dentro:</p>
+            <ul>
+                <li>Dígito 1: É exatamente a quantidade de baterias.</li>
+                <li>Dígito 2: É o dobro do primeiro dígito.</li>
+                <li>Dígito 3: É uma unidade a menos que o primeiro dígito.</li>
+            </ul>`;
+            p2 = `<h2>MÓDULO 2: PONTE LÓGICA (3 ALAVANCAS)</h2>
+            <p>A regra de ouro da mecânica B-43: <i>"Os extremos sempre sobem para proteger o núcleo, que deve permanecer mergulhado no inferno."</i></p>`;
+            p3 = `<h2>MÓDULO 3: CORTE DE FIOS</h2>
+            <p>Existem 3 fios coloridos.</p>
+            <p><b>Diretriz:</b> Nunca confie no verde ácido ou no vermelho sangue. A salvação tem a cor da luz que clareia o dia (Sol).</p>`;
+        }
+        else if (lvl == 2) {
+            intro = `<h2>NÍVEL 2: CRIPTOGRAFIA OCULTA</h2>`;
+            p1 = `<h2>MÓDULO 1: CADEADO GREGO</h2>
+            <p>A senha é composta por 3 símbolos e depende da cor da luz (LED) piscando no módulo.</p>
+            <ul>
+                <li>Se a luz for <b>VERMELHA</b>: A senha começa com o símbolo que parece uma Ferradura (Ω). O segundo é um Triângulo (Δ). O último é um círculo cortado ao meio (Φ).</li>
+                <li>Se a luz for <b>AZUL</b>: Comece pelo "M" deitado (Σ). Siga pelo Tridente (Ѱ). Termine com o "V" de cabeça para baixo (Λ).</li>
+            </ul>`;
+            p2 = `<h2>MÓDULO 2: PONTE LÓGICA (4 ALAVANCAS)</h2>
+            <p>O fluxo de energia obedece ao mesmo LED do cadeado:</p>
+            <ul>
+                <li>Luz Vermelha (Perigo Frio): Desligue (Baixo) as duas alavancas da direita. Mantenha as da esquerda no topo.</li>
+                <li>Luz Azul (Perigo Quente): A energia flui ao contrário. As duas últimas sobem, as primeiras caem.</li>
+            </ul>`;
+            p3 = `<h2>MÓDULO 3: CORTE DE FIOS (4 FIOS)</h2>
+            <p>Atenção à lógica de segurança do protocolo H2:</p>
+            <p>Não confie nas repetições. Procure o único fio cuja cor é o oposto das chamas (Azul) e o corte. Se errar, o sistema inteiro frita.</p>`;
+        }
+        else if (lvl == 3) {
+            intro = `<h2>NÍVEL 3: MATEMÁTICA DO CAOS</h2>`;
+            p1 = `<h2>MÓDULO 1: CADEADO NUMÉRICO</h2>
+            <p>A senha depende do Número de Série (SN) carimbado torto na carcaça:</p>
+            <ul>
+                <li>Se o SN for um <b>NÚMERO PAR</b>: A senha é exatamente a metade desse número. (Adicione um zero à esquerda se der menos de 100).</li>
+                <li>Se o SN for um <b>NÚMERO ÍMPAR</b>: O sistema está invertido. A senha é o próprio SN, mas lido de trás para frente.</li>
+            </ul>`;
+            p2 = `<h2>MÓDULO 2: PONTE LÓGICA (4 ALAVANCAS)</h2>
+            <p>Há uma palavra projetada na tela do módulo:</p>
+            <ul>
+                <li>Palavra <b>AGUA</b>: A água se concentra no centro. (Apenas as duas do meio devem ficar para cima).</li>
+                <li>Palavra <b>FOGO</b>: O fogo se espalha pelas pontas. (Apenas as das extremidades devem subir).</li>
+            </ul>`;
+            p3 = `<h2>MÓDULO 3: FIOS DE ALTA TENSÃO (5 FIOS)</h2>
+            <p>Os fios perdem a importância de cor. A posição é tudo. Depende da regra do SN do Módulo 1:</p>
+            <p>Se a regra do cofre dizia que o SN era Par, corte o fio que divide o grupo ao meio (3º fio). Se era Ímpar, ataque pela retaguarda (o Último fio).</p>`;
+        }
+        else if (lvl == 4) {
+            intro = `<h2>NÍVEL 4: SEM ESPERANÇA</h2>
+            <p class="blink" style="color:var(--red); font-size:1.5rem;">FALHA CRÍTICA NO SENSOR. LEIA RÁPIDO.</p>`;
+            p1 = `<h2>MÓDULO 1: OFFLINE</h2>
+            <p>O visor do módulo está quebrado. Sistemas auxiliares sugerem tentar as combinações repetidas dos anjos (999), da besta (666) ou do vazio absoluto (000). Teste até abrir.</p>`;
+            p2 = `<h2>MÓDULO 2: MANUAL OVERRIDE</h2>
+            <p>Todas as 3 chaves de segurança entraram em curto. Para forçar a quebra do firewall, <b>todas devem apontar para as trevas (Baixo)</b>.</p>`;
+            p3 = `<h2>MÓDULO 3: CORTE CEGO (6 FIOS PRETOS)</h2>
+            <p>Os criadores da bomba pintaram todos os 6 fios de preto para confundir o esquadrão. Numerados da esquerda para a direita (1 a 6).</p>
+            <p>Nossos scanners não conseguem penetrar a blindagem, mas detectamos uma assinatura. A energia vital flui apenas pelos caminhos puros.</p>
+            <p><b>O fio correto é obrigatoriamente um Número Primo (2, 3 ou 5).</b> Escolha o seu deus, feche os olhos e mande ele cortar um desses três aleatoriamente.</p>`;
+        }
+
+        mc.innerHTML = `${intro}
+            <div class="manual-section" id="ms-1">${p1}</div>
+            <div class="manual-section" id="ms-2">${p2}</div>
+            <div class="manual-section" id="ms-3">${p3}</div>`;
+        mc.dataset.builtFor = lvl;
     }
-    else if (lvl == 2) {
-        html = `
-        <h2>NÍVEL 2: CRIPTOGRAFIA OCULTA</h2>
-        
-        <h2>MÓDULO 1: CADEADO GREGO</h2>
-        <p>A senha é composta por 3 símbolos e depende da cor da luz (LED) piscando no módulo.</p>
-        <ul>
-            <li>Se a luz for <b>VERMELHA</b>: A senha começa com o símbolo que parece uma Ferradura (Ω). O segundo é um Triângulo (Δ). O último é um círculo cortado ao meio (Φ).</li>
-            <li>Se a luz for <b>AZUL</b>: Comece pelo "M" deitado (Σ). Siga pelo Tridente (Ѱ). Termine com o "V" de cabeça para baixo (Λ).</li>
-        </ul>
 
-        <h2>MÓDULO 2: PONTE LÓGICA (4 ALAVANCAS)</h2>
-        <p>O fluxo de energia obedece ao mesmo LED do cadeado:</p>
-        <ul>
-            <li>Luz Vermelha (Perigo Frio): Desligue (Baixo) as duas alavancas da direita. Mantenha as da esquerda no topo.</li>
-            <li>Luz Azul (Perigo Quente): A energia flui ao contrário. As duas últimas sobem, as primeiras caem.</li>
-        </ul>
-
-        <h2>MÓDULO 3: CORTE DE FIOS (4 FIOS)</h2>
-        <p>Atenção à lógica de segurança do protocolo H2:</p>
-        <p>Não confie nas repetições. Procure o único fio cuja cor é o oposto das chamas (Azul) e o corte. Se errar, o sistema inteiro frita.</p>
-        `;
-    }
-    else if (lvl == 3) {
-        html = `
-        <h2>NÍVEL 3: MATEMÁTICA DO CAOS</h2>
-        
-        <h2>MÓDULO 1: CADEADO NUMÉRICO</h2>
-        <p>A senha depende do Número de Série (SN) carimbado torto na carcaça:</p>
-        <ul>
-            <li>Se o SN for um <b>NÚMERO PAR</b>: A senha é exatamente a metade desse número. (Adicione um zero à esquerda se der menos de 100).</li>
-            <li>Se o SN for um <b>NÚMERO ÍMPAR</b>: O sistema está invertido. A senha é o próprio SN, mas lido de trás para frente.</li>
-        </ul>
-
-        <h2>MÓDULO 2: PONTE LÓGICA (4 ALAVANCAS)</h2>
-        <p>Há uma palavra projetada na tela do módulo:</p>
-        <ul>
-            <li>Palavra <b>AGUA</b>: A água se concentra no centro. (Apenas as duas do meio devem ficar para cima).</li>
-            <li>Palavra <b>FOGO</b>: O fogo se espalha pelas pontas. (Apenas as das extremidades devem subir).</li>
-        </ul>
-
-        <h2>MÓDULO 3: FIOS DE ALTA TENSÃO (5 FIOS)</h2>
-        <p>Os fios perdem a importância de cor. A posição é tudo. Depende da regra do SN do Módulo 1:</p>
-        <p>Se a regra do cofre dizia que o SN era Par, corte o fio que divide o grupo ao meio (3º fio). Se era Ímpar, ataque pela retaguarda (o Último fio).</p>
-        `;
-    }
-    else if (lvl == 4) {
-        html = `
-        <h2>NÍVEL 4: SEM ESPERANÇA</h2>
-        <p class="blink" style="color:var(--red); font-size:1.5rem;">FALHA CRÍTICA NO SENSOR. LEIA RÁPIDO.</p>
-        
-        <h2>MÓDULO 1: OFFLINE</h2>
-        <p>O visor do módulo está quebrado. Sistemas auxiliares sugerem tentar as combinações repetidas dos anjos (999), da besta (666) ou do vazio absoluto (000). Teste até abrir.</p>
-
-        <h2>MÓDULO 2: MANUAL OVERRIDE</h2>
-        <p>Todas as 3 chaves de segurança entraram em curto. Para forçar a quebra do firewall, <b>todas devem apontar para as trevas (Baixo)</b>.</p>
-
-        <h2>MÓDULO 3: CORTE CEGO (6 FIOS PRETOS)</h2>
-        <p>Os criadores da bomba pintaram todos os 6 fios de preto para confundir o esquadrão. Numerados da esquerda para a direita (1 a 6).</p>
-        <p>Nossos scanners não conseguem penetrar a blindagem, mas detectamos uma assinatura. A energia vital flui apenas pelos caminhos puros.</p>
-        <p><b>O fio correto é obrigatoriamente um Número Primo (2, 3 ou 5).</b> Escolha o seu deus, feche os olhos e mande ele cortar um desses três aleatoriamente.</p>
-        `;
-    }
-    
-    mc.innerHTML = html;
+    highlightPhase();
 }
+
+function highlightPhase() {
+    [1, 2, 3].forEach(i => {
+        const el = document.getElementById('ms-' + i);
+        if (el) el.classList.toggle('active-phase', i === roomData.phase);
+    });
+    document.getElementById('phase-badge').innerText = '🎯 FOCO ATUAL: MÓDULO ' + roomData.phase;
+    const active = document.getElementById('ms-' + roomData.phase);
+    if (active) active.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+updateLevelHint();
 </script>
 </body>
 </html>
