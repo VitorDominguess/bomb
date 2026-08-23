@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Projeto: DESARME</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Teko:wght@500;700&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyACkQvVLWyCItyEjPaMRpYSgsP2luAq2WQ",
+    authDomain: "memory-wars-6bb6b.firebaseapp.com",
+    databaseURL: "https://memory-wars-6bb6b-default-rtdb.firebaseio.com",
+    projectId: "memory-wars-6bb6b",
+    storageBucket: "memory-wars-6bb6b.firebasestorage.app",
+    messagingSenderId: "635970774104",
+    appId: "1:635970774104:web:9b432ef95c179939a5d62d"
+};
+
+const app = initializeApp(firebaseConfig);
+window.__fb = { db: getDatabase(app), ref, set, get, onValue };
+window.dispatchEvent(new Event("firebase-ready"));
+</script>
+
+<style>
+/* =========================================================
+   VARIÁVEIS E BASE
+========================================================= */
+:root {
+    --bg-bomb: #1a1c20;
+    --metal: #2c3035;
+    --red: #ff3333;
+    --green: #00ff66;
+    --blue: #00ccff;
+    --yellow: #ffcc00;
+    --terminal-bg: #051005;
+    --terminal-green: #33ff33;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; }
+
+.screen { display: none; flex-direction: column; height: 100%; width: 100%; max-width: 600px; margin: 0 auto; position: relative; }
+.screen.active { display: flex; }
+
+/* =========================================================
+   UI GERAL (LOBBY)
+========================================================= */
+.container { padding: 20px; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+h1 { font-family: 'Teko', sans-serif; font-size: 4rem; text-align: center; color: var(--red); text-transform: uppercase; line-height: 1; margin-bottom: 5px; text-shadow: 0 0 10px rgba(255,0,0,0.5); }
+.subtitle { text-align: center; color: #aaa; margin-bottom: 30px; letter-spacing: 2px; }
+
+input, select, button { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1.2rem; font-family: 'Teko', sans-serif; text-transform: uppercase; }
+input, select { background: #222; color: #fff; border: 2px solid #444; }
+button { background: var(--red); color: white; cursor: pointer; font-size: 1.5rem; transition: 0.2s; box-shadow: 0 5px 0 #990000; }
+button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
+.btn-secondary { background: #444; box-shadow: 0 5px 0 #222; margin-top: 20px; }
+
+.room-display { font-family: 'Share Tech Mono', monospace; font-size: 3.5rem; text-align: center; color: var(--yellow); letter-spacing: 10px; margin: 20px 0; background: #111; padding: 20px; border-radius: 10px; border: 2px dashed #555; }
+
+/* =========================================================
+   TELA DO DESARMADOR (THEME BOMB)
+========================================================= */
+.theme-bomb { background: var(--bg-bomb); box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
+.bomb-header { display: flex; justify-content: space-between; padding: 15px 20px; background: #111; border-bottom: 4px solid #333; align-items: center; }
+.timer-display { font-family: 'Share Tech Mono', monospace; font-size: 3rem; color: var(--red); text-shadow: 0 0 10px rgba(255,0,0,0.8); }
+.strikes-display { font-size: 2rem; letter-spacing: 5px; }
+.strike { color: #333; }
+.strike.active { color: var(--red); text-shadow: 0 0 10px red; }
+
+.bomb-module { flex: 1; padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: var(--metal); margin: 20px; border-radius: 15px; border: 5px solid #444; box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 10px 20px rgba(0,0,0,0.5); position: relative; }
+.module-title { position: absolute; top: 10px; left: 15px; font-family: 'Share Tech Mono'; font-size: 0.9rem; color: #888; text-transform: uppercase; }
+.clue-badge { position: absolute; top: 10px; right: 15px; background: #000; padding: 5px 10px; border-radius: 5px; font-family: 'Share Tech Mono'; color: var(--yellow); border: 1px solid #555; display:flex; gap: 5px; align-items: center;}
+.led { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+
+/* Keypad (Fase 1) */
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 250px; margin-top: 20px; }
+.key-btn { background: #1a1a1a; border: 2px solid #555; color: white; padding: 20px 0; font-size: 1.8rem; border-radius: 10px; text-align: center; box-shadow: 0 4px 0 #000; }
+.key-btn:active { transform: translateY(4px); box-shadow: none; }
+.display-screen { width: 100%; max-width: 250px; background: #0a0a0a; border: 3px solid #222; color: var(--green); font-family: 'Share Tech Mono'; font-size: 2.5rem; text-align: right; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; height: 65px; letter-spacing: 5px; }
+
+/* Switches (Fase 2) */
+.switch-container { display: flex; gap: 20px; margin-top: 20px; }
+.switch-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.switch { width: 60px; height: 100px; background: #111; border-radius: 30px; position: relative; border: 3px solid #444; cursor: pointer; transition: 0.3s; box-shadow: inset 0 0 10px #000; }
+.switch-knob { width: 50px; height: 50px; background: #666; border-radius: 25px; position: absolute; top: 2px; left: 2px; transition: 0.2s; box-shadow: 0 5px 10px rgba(0,0,0,0.5); }
+.switch.up .switch-knob { top: 2px; background: #888; }
+.switch.down .switch-knob { top: 42px; background: #444; }
+.submit-btn { margin-top: 30px; background: var(--yellow); color: #000; box-shadow: 0 5px 0 #b38f00; max-width: 200px; }
+
+/* Wires (Fase 3) */
+.wires-container { display: flex; flex-direction: column; gap: 15px; width: 100%; padding: 20px; }
+.wire { height: 25px; width: 100%; border-radius: 12px; cursor: pointer; position: relative; box-shadow: inset 0 5px 10px rgba(255,255,255,0.2), inset 0 -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.5); }
+.wire::before, .wire::after { content: ''; position: absolute; top: -5px; width: 15px; height: 35px; background: #111; border: 2px solid #333; }
+.wire::before { left: -10px; border-radius: 5px 0 0 5px; }
+.wire::after { right: -10px; border-radius: 0 5px 5px 0; }
+.wire.cut { opacity: 0.3; pointer-events: none; }
+.wire.cut::part { background: transparent; }
+
+/* =========================================================
+   TELA DO INSTRUTOR (THEME TERMINAL)
+========================================================= */
+.theme-terminal { background: var(--terminal-bg); color: var(--terminal-green); font-family: 'Share Tech Mono', monospace; }
+/* Efeito de Scanlines e CRT */
+.theme-terminal::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 2; background-size: 100% 4px, 6px 100%; pointer-events: none; }
+.terminal-header { display: flex; justify-content: space-between; padding: 15px 20px; border-bottom: 2px solid var(--terminal-green); z-index: 3; position: relative; background: #020802; }
+.terminal-timer { font-size: 2.5rem; text-shadow: 0 0 8px var(--terminal-green); }
+.manual-content { padding: 20px; overflow-y: auto; z-index: 3; position: relative; flex: 1; font-size: 1.1rem; line-height: 1.6; }
+.manual-content h2 { border-bottom: 1px dashed var(--terminal-green); padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; }
+.manual-content ul { padding-left: 20px; }
+.manual-content li { margin-bottom: 10px; }
+.blink { animation: blinker 1s linear infinite; }
+@keyframes blinker { 50% { opacity: 0; } }
+
+/* =========================================================
+   EFEITOS E ESTADOS GERAIS
+========================================================= */
+.panic { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; border: 5px solid red; box-shadow: inset 0 0 50px red; }
+@keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-8px, 0, 0); } 40%, 60% { transform: translate3d(8px, 0, 0); } }
+
+#screen-end { background: #000; justify-content: center; align-items: center; text-align: center; z-index: 100; }
+#end-msg { font-family: 'Teko'; font-size: 6rem; text-transform: uppercase; line-height: 1; margin-bottom: 20px; }
+.win { color: var(--green); text-shadow: 0 0 30px var(--green); }
+.lose { color: var(--red); text-shadow: 0 0 30px var(--red); }
+</style>
+</head>
+<body>
+
+<!-- TELA LOBBY -->
+<div id="screen-lobby" class="screen active">
+    <div class="container">
+        <h1>DESARME</h1>
+        <p class="subtitle">Comunicação é a chave para sobreviver.</p>
+        
+        <input type="text" id="input-name" placeholder="SEU NOME" maxlength="10">
+        
+        <div style="background: #1a1a1a; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="margin-top:0; color:#888; font-family:'Teko';">CRIAR NOVA MISSÃO</h3>
+            <select id="select-level">
+                <option value="1">Nível 1: Fácil</option>
+                <option value="2">Nível 2: Médio</option>
+                <option value="3">Nível 3: Difícil</option>
+                <option value="4">Nível 4: Impossível</option>
+            </select>
+            <button onclick="createRoom()">CRIAR SALA (DESARMADOR)</button>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 10px; color:#666;">OU</div>
+
+        <div style="background: #1a1a1a; padding: 20px; border-radius: 10px;">
+            <h3 style="margin-top:0; color:#888; font-family:'Teko';">ENTRAR COMO INSTRUTOR</h3>
+            <input type="text" id="input-code" placeholder="CÓDIGO DA SALA" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
+            <button onclick="joinRoom()" style="background: var(--blue); box-shadow: 0 5px 0 #0088aa;">CONECTAR MANUAL</button>
+        </div>
+    </div>
+</div>
+
+<!-- TELA ESPERA -->
+<div id="screen-waiting" class="screen">
+    <div class="container">
+        <h2 style="text-align: center; color: #888;">INFORME ESTE CÓDIGO AO SEU INSTRUTOR:</h2>
+        <div class="room-display" id="display-code">----</div>
+        <p class="subtitle blink">Aguardando conexão segura...</p>
+    </div>
+</div>
+
+<!-- TELA DESARMADOR (BOMBA) -->
+<div id="screen-bomb" class="screen theme-bomb">
+    <div class="bomb-header">
+        <div class="strikes-display">
+            <span class="strike" id="strike-1">X</span>
+            <span class="strike" id="strike-2">X</span>
+            <span class="strike" id="strike-3">X</span>
+        </div>
+        <div class="timer-display" id="bomb-timer">00:00</div>
+    </div>
+    
+    <!-- MÓDULO 1: COFRE -->
+    <div class="bomb-module" id="module-1" style="display:none;">
+        <div class="module-title">Módulo 1: Trava Numérica</div>
+        <div class="clue-badge" id="clue-safe"></div>
+        
+        <div class="display-screen" id="safe-display"></div>
+        <div class="keypad" id="safe-keypad">
+            <!-- Gerado via JS -->
+        </div>
+    </div>
+
+    <!-- MÓDULO 2: MALETA -->
+    <div class="bomb-module" id="module-2" style="display:none;">
+        <div class="module-title">Módulo 2: Painel Lógico</div>
+        <div class="clue-badge" id="clue-briefcase"></div>
+        
+        <div class="switch-container" id="briefcase-switches">
+            <!-- Gerado via JS -->
+        </div>
+        <button class="submit-btn" onclick="checkBriefcase()">VALIDAR</button>
+    </div>
+
+    <!-- MÓDULO 3: FIOS -->
+    <div class="bomb-module" id="module-3" style="display:none;">
+        <div class="module-title">Módulo 3: Detonador</div>
+        <div class="clue-badge" id="clue-wires"></div>
+        
+        <div class="wires-container" id="bomb-wires">
+            <!-- Gerado via JS -->
+        </div>
+    </div>
+</div>
+
+<!-- TELA INSTRUTOR (MANUAL) -->
+<div id="screen-manual" class="screen theme-terminal">
+    <div class="terminal-header">
+        <div>SYS_MANUAL_V4.2</div>
+        <div class="terminal-timer" id="manual-timer">00:00</div>
+    </div>
+    <div class="manual-content" id="manual-text">
+        <!-- Injetado via JS -->
+    </div>
+</div>
+
+<!-- TELA FIM DE JOGO -->
+<div id="screen-end" class="screen">
+    <div class="container" style="align-items: center;">
+        <div id="end-msg">BOOM!</div>
+        <p id="end-sub" style="font-size: 1.5rem; color:#aaa; margin-bottom: 40px;"></p>
+        <button onclick="location.reload()" style="max-width: 300px;">NOVA MISSÃO</button>
+    </div>
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURAÇÃO DOS NÍVEIS
+========================================================= */
+const LEVELS = {
+    1: { time: 180, name: 'Fácil' },
+    2: { time: 150, name: 'Médio' },
+    3: { time: 120, name: 'Difícil' },
+    4: { time: 90, name: 'Impossível' }
+};
+
+const COLORS = { R: 'var(--red)', G: 'var(--green)', B: 'var(--blue)', Y: 'var(--yellow)', W: '#ffffff', K: '#222' };
+
+/* ESTADO LOCAL */
+let roomCode = null;
+let roomData = null;
+let myRole = null; // 'defuser' ou 'manual'
+let timerInterval = null;
+let currentInput = ""; // Para o cofre
+
+/* =========================================================
+   GERAÇÃO DE LÓGICA DO PUZZLE (Só o Defuser cria)
+========================================================= */
+function generatePuzzleVars(level) {
+    const vars = {};
+    const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    
+    if (level == 1) {
+        vars.bat = rnd([1, 2, 3]);
+        vars.wireColorToCut = 'B'; // Fixo no nivel 1
+    } 
+    else if (level == 2) {
+        vars.led = rnd(['R', 'B']);
+        vars.wireColors = [rnd(['R','Y']), rnd(['R','Y']), 'B', rnd(['R','Y'])];
+    }
+    else if (level == 3) {
+        vars.serial = rnd(['X7B', 'A99']);
+        vars.word = rnd(['PERIGO', 'FOGO']);
+        vars.wires = ['R','B','G','Y','W'].sort(()=>Math.random()-0.5);
+    }
+    else if (level == 4) {
+        vars.code = rnd(['6666', '0000', '1234']);
+        vars.wires = ['K','K','K','K','K','K']; // Todos pretos
+        vars.targetWire = rnd([1, 3, 5]); // Fio correto (index 0-5)
+    }
+    return vars;
+}
+
+/* =========================================================
+   FIREBASE ROOM MANAGEMENT
+========================================================= */
+function genCode() { return Math.random().toString(36).substring(2, 6).toUpperCase(); }
+async function waitForFirebase() {
+    return new Promise(res => { if (window.__fb) res(); else window.addEventListener('firebase-ready', res); });
+}
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+async function createRoom() {
+    await waitForFirebase();
+    const lvl = parseInt(document.getElementById('select-level').value);
+    roomCode = genCode();
+    myRole = 'defuser';
+    
+    const rData = {
+        code: roomCode,
+        status: 'waiting',
+        level: lvl,
+        strikes: 0,
+        phase: 1,
+        expiresAt: 0, // Setado quando o instrutor entrar
+        vars: generatePuzzleVars(lvl)
+    };
+    
+    await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), rData);
+    document.getElementById('display-code').innerText = roomCode;
+    showScreen('screen-waiting');
+    startListening();
+}
+
+async function joinRoom() {
+    await waitForFirebase();
+    const code = document.getElementById('input-code').value.toUpperCase();
+    if(code.length !== 4) return alert("Código inválido.");
+    
+    const snap = await window.__fb.get(window.__fb.ref(window.__fb.db, 'rooms/' + code));
+    if (snap.exists()) {
+        const data = snap.val();
+        if (data.status === 'waiting') {
+            roomCode = code;
+            myRole = 'manual';
+            // Start game!
+            const expiresAt = Date.now() + (LEVELS[data.level].time * 1000);
+            await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + code + '/status'), 'playing');
+            await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + code + '/expiresAt'), expiresAt);
+            startListening();
+        } else { alert("Sala em andamento ou fechada."); }
+    } else { alert("Sala não encontrada."); }
+}
+
+function startListening() {
+    window.__fb.onValue(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), snap => {
+        if (!snap.exists()) return;
+        const oldPhase = roomData ? roomData.phase : 1;
+        roomData = snap.val();
+        
+        if (roomData.status === 'playing') {
+            if (myRole === 'defuser') {
+                showScreen('screen-bomb');
+                renderBombScreen();
+            } else {
+                showScreen('screen-manual');
+                renderManualScreen();
+            }
+            if(!timerInterval) timerInterval = setInterval(updateTimer, 100);
+            
+            // Toca efeito se errou
+            if (roomData.strikes > 0) {
+                document.getElementById('strike-' + roomData.strikes).classList.add('active');
+                if(myRole === 'defuser') {
+                    document.body.classList.add('panic');
+                    setTimeout(()=>document.body.classList.remove('panic'), 500);
+                }
+            }
+            
+            // Limpa input se mudou de fase
+            if(roomData.phase > oldPhase) {
+                currentInput = "";
+                if(document.getElementById('safe-display')) document.getElementById('safe-display').innerText = "";
+            }
+        }
+        else if (roomData.status === 'exploded') endGame(false);
+        else if (roomData.status === 'defused') endGame(true);
+    });
+}
+
+function sendAction(actionObj) {
+    // Usado pelo Defuser para atualizar fase ou strikes
+    window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), { ...roomData, ...actionObj });
+}
+
+/* =========================================================
+   TIMER & GAME OVER
+========================================================= */
+function updateTimer() {
+    if(!roomData || roomData.status !== 'playing') return;
+    const left = Math.max(0, roomData.expiresAt - Date.now());
+    
+    if (left === 0) {
+        clearInterval(timerInterval);
+        if (myRole === 'defuser') sendAction({ status: 'exploded', reason: 'Tempo esgotado!' });
+        return;
+    }
+    
+    const mins = Math.floor(left / 60000);
+    const secs = Math.floor((left % 60000) / 1000);
+    const ms = Math.floor((left % 1000) / 10);
+    
+    const text = (mins>0) ? 
+        `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}` : 
+        `${secs.toString().padStart(2,'0')}:${ms.toString().padStart(2,'0')}`;
+        
+    if(myRole === 'defuser') {
+        const el = document.getElementById('bomb-timer');
+        el.innerText = text;
+        if(left < 30000) el.style.animation = "blinker 0.5s linear infinite";
+    } else {
+        const el = document.getElementById('manual-timer');
+        el.innerText = text;
+        if(left < 30000) el.style.color = "var(--red)";
+    }
+}
+
+function endGame(win) {
+    clearInterval(timerInterval);
+    showScreen('screen-end');
+    const msg = document.getElementById('end-msg');
+    msg.innerText = win ? 'BOMBA DESARMADA!' : 'BOOM!';
+    msg.className = win ? 'win' : 'lose';
+    document.getElementById('end-sub').innerText = win ? 'Missão Cumprida.' : (roomData.reason || 'Sua comunicação falhou.');
+}
+
+function addStrike() {
+    const newStrikes = roomData.strikes + 1;
+    if (newStrikes >= 3) sendAction({ strikes: 3, status: 'exploded', reason: 'Erros demais!' });
+    else sendAction({ strikes: newStrikes });
+}
+
+/* =========================================================
+   LÓGICA DOS PUZZLES (DEFUSER)
+========================================================= */
+function renderBombScreen() {
+    // Esconde todos
+    [1,2,3].forEach(i => document.getElementById('module-'+i).style.display = 'none');
+    
+    const m = document.getElementById('module-' + roomData.phase);
+    m.style.display = 'flex';
+    const v = roomData.vars;
+
+    if (roomData.phase === 1) { // COFRE
+        const badge = document.getElementById('clue-safe');
+        if(roomData.level == 1) badge.innerHTML = `🔋 x${v.bat}`;
+        else if(roomData.level == 2) badge.innerHTML = `LED <div class="led" style="background:${COLORS[v.led]}"></div>`;
+        else if(roomData.level == 3) badge.innerHTML = `SN: ${v.serial}`;
+        else if(roomData.level == 4) badge.innerHTML = `<span class="blink">ERRO SYS</span>`;
+        
+        const pad = document.getElementById('safe-keypad');
+        if(pad.innerHTML.trim() === "") {
+            let keys = [1,2,3,4,5,6,7,8,9,'C',0,'OK'];
+            if(roomData.level == 2) keys = ['Ω','Ѱ','Δ','Σ','Φ','Λ','Θ','Ξ','Π','C','Ж','OK'];
+            
+            keys.forEach(k => {
+                const btn = document.createElement('button');
+                btn.className = 'key-btn';
+                btn.innerText = k;
+                btn.onclick = () => handleSafeClick(k);
+                pad.appendChild(btn);
+            });
+        }
+    }
+    else if (roomData.phase === 2) { // MALETA
+        const badge = document.getElementById('clue-briefcase');
+        if(roomData.level == 1) badge.innerHTML = 'ENGRENAGENS';
+        else if(roomData.level == 2) badge.innerHTML = 'RGB_SYS';
+        else if(roomData.level == 3) badge.innerHTML = `V_TXT: ${v.word}`;
+        else if(roomData.level == 4) badge.innerHTML = 'MASTER_LOCK';
+        
+        const sw = document.getElementById('briefcase-switches');
+        if(sw.innerHTML.trim() === "") {
+            const numSwitches = (roomData.level == 1 || roomData.level == 4) ? 3 : 4;
+            for(let i=0; i<numSwitches; i++) {
+                const w = document.createElement('div');
+                w.className = 'switch down';
+                w.dataset.pos = '0'; // 0 = down, 1 = up
+                w.innerHTML = '<div class="switch-knob"></div>';
+                w.onclick = () => {
+                    w.classList.toggle('up'); w.classList.toggle('down');
+                    w.dataset.pos = w.classList.contains('up') ? '1' : '0';
+                };
+                sw.appendChild(w);
+            }
+        }
+    }
+    else if (roomData.phase === 3) { // FIOS
+        const badge = document.getElementById('clue-wires');
+        badge.innerHTML = 'CUIDADO!';
+        
+        const wc = document.getElementById('bomb-wires');
+        if(wc.innerHTML.trim() === "") {
+            let wires = [];
+            if(roomData.level == 1) wires = ['R','B','G'];
+            else if(roomData.level == 2) wires = v.wireColors;
+            else if(roomData.level == 3) wires = v.wires;
+            else if(roomData.level == 4) wires = v.wires;
+
+            wires.forEach((c, idx) => {
+                const w = document.createElement('div');
+                w.className = 'wire';
+                w.style.background = COLORS[c];
+                w.onclick = () => handleWireCut(w, idx, c);
+                wc.appendChild(w);
+            });
+        }
+    }
+}
+
+// Interações do Defuser
+function handleSafeClick(k) {
+    const disp = document.getElementById('safe-display');
+    if (k === 'C') { currentInput = ""; disp.innerText = ""; return; }
+    if (k === 'OK') {
+        let correct = "";
+        const v = roomData.vars;
+        if(roomData.level == 1) correct = v.bat==1 ? '123' : (v.bat==2 ? '456' : '789');
+        else if(roomData.level == 2) correct = v.led=='R' ? 'ΩΔΦ' : 'ΣѰΩ';
+        else if(roomData.level == 3) correct = v.serial=='X7B' ? '382' : '514';
+        else if(roomData.level == 4) correct = v.code; // '6666' etc
+        
+        if (currentInput === correct) sendAction({ phase: 2 });
+        else { addStrike(); currentInput = ""; disp.innerText = "ERR"; setTimeout(()=>disp.innerText="", 1000); }
+        return;
+    }
+    if (currentInput.length < 5) {
+        currentInput += k;
+        disp.innerText = currentInput;
+    }
+}
+
+function checkBriefcase() {
+    const sws = document.querySelectorAll('.switch');
+    let state = Array.from(sws).map(s => s.dataset.pos).join('');
+    let correct = "";
+    const v = roomData.vars;
+    
+    if(roomData.level == 1) correct = "101"; // Up, Down, Up
+    else if(roomData.level == 2) correct = v.led=='R' ? "1100" : "0011";
+    else if(roomData.level == 3) correct = v.word=='PERIGO' ? "1001" : "0110";
+    else if(roomData.level == 4) correct = "111"; // Tudo cima
+    
+    if (state === correct) sendAction({ phase: 3 });
+    else addStrike();
+}
+
+function handleWireCut(el, idx, color) {
+    if(el.classList.contains('cut')) return;
+    el.classList.add('cut');
+    
+    let isCorrect = false;
+    const v = roomData.vars;
+    
+    if(roomData.level == 1) isCorrect = (color === 'B');
+    else if(roomData.level == 2) {
+        const numYellow = v.wireColors.filter(c=>c==='Y').length;
+        if(numYellow > 1 && idx === v.wireColors.indexOf('Y')) isCorrect = true;
+        else if(numYellow <= 1 && color === 'B') isCorrect = true;
+    }
+    else if(roomData.level == 3) {
+        if(v.serial === 'A99' && idx === 4) isCorrect = true;
+        else if(v.serial !== 'A99' && idx === 2) isCorrect = true;
+    }
+    else if(roomData.level == 4) isCorrect = (idx === v.targetWire);
+    
+    if (isCorrect) sendAction({ status: 'defused' });
+    else addStrike();
+}
+
+/* =========================================================
+   MANUAL DO INSTRUTOR (HTML ESTÁTICO POR NÍVEL)
+========================================================= */
+function renderManualScreen() {
+    const mc = document.getElementById('manual-text');
+    const lvl = roomData.level;
+    let html = "";
+    
+    if (lvl == 1) {
+        html = `
+        <h2>NÍVEL 1: INICIAÇÃO</h2>
+        <p>Alerte o desarmador que vocês têm 3 minutos.</p>
+        
+        <h2>MÓDULO 1: COFRE (TRAVA NUMÉRICA)</h2>
+        <p>Pergunte ao desarmador quantas <b>BATERIAS 🔋</b> ele vê fixadas no cofre.</p>
+        <ul>
+            <li>Se for <b>1 BATERIA</b>: A senha é <b>123</b></li>
+            <li>Se for <b>2 BATERIAS</b>: A senha é <b>456</b></li>
+            <li>Se for <b>3 BATERIAS</b>: A senha é <b>789</b></li>
+        </ul>
+
+        <h2>MÓDULO 2: MALETA LÓGICA</h2>
+        <p>Existem 3 alavancas. A posição correta é formar uma <b>"Ponte Quebrada"</b>.</p>
+        <ul>
+            <li>Alavanca Esquerda: <b>PARA CIMA</b></li>
+            <li>Alavanca Central: <b>PARA BAIXO</b></li>
+            <li>Alavanca Direita: <b>PARA CIMA</b></li>
+        </ul>
+
+        <h2>MÓDULO 3: DESARME</h2>
+        <p>Fios visíveis: Vermelho, Azul, Verde.</p>
+        <p><b>Atenção:</b> O fio verde contém ácido e o vermelho aciona a detonação imediata. Corte o <b>FIO AZUL</b>.</p>
+        `;
+    }
+    else if (lvl == 2) {
+        html = `
+        <h2>NÍVEL 2: SÍMBOLOS</h2>
+        
+        <h2>MÓDULO 1: COFRE (SÍMBOLOS)</h2>
+        <p>Pergunte a cor do <b>LED</b> brilhando no canto do cofre.</p>
+        <ul>
+            <li>LED VERMELHO: Digite Ferradura(Ω), Triângulo(Δ), Zero-Cortado(Φ).</li>
+            <li>LED AZUL: Digite M(Σ), Tridente(Ѱ), Ferradura(Ω).</li>
+        </ul>
+
+        <h2>MÓDULO 2: MALETA LÓGICA</h2>
+        <p>Existem 4 alavancas. A senha depende do LED anterior:</p>
+        <ul>
+            <li>Se o LED era VERMELHO: Levante as <b>duas primeiras</b> e baixe as outras.</li>
+            <li>Se o LED era AZUL: Baixe as duas primeiras e <b>levante as duas últimas</b>.</li>
+        </ul>
+
+        <h2>MÓDULO 3: DESARME (4 FIOS)</h2>
+        <p>Regras de corte (siga a ordem):</p>
+        <ol>
+            <li>Se houver MAIS de UM fio Amarelo, corte o <b>PRIMEIRO FIO AMARELO</b> que aparecer.</li>
+            <li>Caso contrário, corte o <b>FIO AZUL</b>.</li>
+        </ol>
+        `;
+    }
+    else if (lvl == 3) {
+        html = `
+        <h2>NÍVEL 3: MEMÓRIA VOLÁTIL</h2>
+        
+        <h2>MÓDULO 1: COFRE</h2>
+        <p>Pergunte o <b>Número de Série (SN)</b> colado no cofre.</p>
+        <ul>
+            <li>Se o SN for <b>X7B</b>, a senha é <b>382</b>.</li>
+            <li>Se o SN for <b>A99</b>, a senha é <b>514</b>.</li>
+        </ul>
+
+        <h2>MÓDULO 2: MALETA</h2>
+        <p>Pergunte a <b>Palavra (V_TXT)</b> mostrada no painel da maleta (4 Alavancas).</p>
+        <ul>
+            <li>Se a palavra for <b>PERIGO</b>: Alavancas das PONTAS para cima, as do MEIO para baixo.</li>
+            <li>Se a palavra for <b>FOGO</b>: Alavancas do MEIO para cima, as das PONTAS para baixo.</li>
+        </ul>
+
+        <h2>MÓDULO 3: DESARME (5 FIOS)</h2>
+        <p>Regra de Ouro da Engenharia:</p>
+        <ul>
+            <li>Corte o <b>TERCEIRO</b> fio.</li>
+            <li><b>A MENOS QUE</b> o Serial do Cofre fosse A99. Neste caso, corte o <b>ÚLTIMO</b> fio.</li>
+        </ul>
+        `;
+    }
+    else if (lvl == 4) {
+        html = `
+        <h2>NÍVEL 4: PANICO NO SISTEMA</h2>
+        <p class="blink" style="color:var(--red)">O TEMPO ESTÁ CURTO. LEIA RÁPIDO.</p>
+        
+        <h2>MÓDULO 1: COFRE</h2>
+        <p>O visor diz ERRO SYS. Diga para ele testar e apertar OK nestas senhas genéricas de fábrica em ordem, até uma funcionar:</p>
+        <p><b>1234</b>, depois <b>0000</b>, depois <b>6666</b>.</p>
+
+        <h2>MÓDULO 2: MALETA</h2>
+        <p>São 3 alavancas. Coloque <b>TODAS PARA CIMA</b>. É um sistema Override.</p>
+
+        <h2>MÓDULO 3: DESARME (FIOS CEGOS)</h2>
+        <p>Todos os 6 fios são PRETOS. A contagem é da esquerda para a direita (1 a 6).</p>
+        <p>A resposta certa é totalmente aleatória e imprevisível pelas minhas notas. O fio correto é...</p>
+        <p>Espera... os sensores dizem que o sistema ativou o fio <b>2, 4 ou 6</b> (um dos pares). Mande ele chutar com cuidado!</p>
+        `;
+    }
+    
+    mc.innerHTML = html;
+}
+</script>
+</body>
+</html>
