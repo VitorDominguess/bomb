@@ -55,7 +55,7 @@ h1 { font-family: 'Teko', sans-serif; font-size: 4rem; text-align: center; color
 .subtitle { text-align: center; color: #aaa; margin-bottom: 30px; letter-spacing: 2px; }
 
 input, select, button { width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: none; font-size: 1.2rem; font-family: 'Teko', sans-serif; text-transform: uppercase; }
-input, select { background: #222; color: #fff; border: 2px solid #444; }
+input, select { background: #222; color: #fff; border: 2px solid #444; outline: none; }
 button { background: var(--red); color: white; cursor: pointer; font-size: 1.5rem; transition: 0.2s; box-shadow: 0 5px 0 #990000; }
 button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 .btn-secondary { background: #444; box-shadow: 0 5px 0 #222; margin-top: 20px; }
@@ -67,7 +67,7 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 ========================================================= */
 .theme-bomb { background: var(--bg-bomb); box-shadow: inset 0 0 50px rgba(0,0,0,0.9); }
 .bomb-header { display: flex; justify-content: space-between; padding: 15px 20px; background: #111; border-bottom: 4px solid #333; align-items: center; }
-.timer-display { font-family: 'Share Tech Mono', monospace; font-size: 3rem; color: var(--red); text-shadow: 0 0 10px rgba(255,0,0,0.8); }
+.timer-display { font-family: 'Share Tech Mono', monospace; font-size: 1.5rem; color: var(--red); text-shadow: 0 0 5px rgba(255,0,0,0.8); }
 .strikes-display { font-size: 2rem; letter-spacing: 5px; }
 .strike { color: #333; }
 .strike.active { color: var(--red); text-shadow: 0 0 10px red; }
@@ -77,11 +77,12 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 .clue-badge { position: absolute; top: 10px; right: 15px; background: #000; padding: 5px 10px; border-radius: 5px; font-family: 'Share Tech Mono'; color: var(--yellow); border: 1px solid #555; display:flex; gap: 5px; align-items: center;}
 .led { width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
 
-/* Keypad (Fase 1) */
-.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 250px; margin-top: 20px; }
-.key-btn { background: #1a1a1a; border: 2px solid #555; color: white; padding: 20px 0; font-size: 1.8rem; border-radius: 10px; text-align: center; box-shadow: 0 4px 0 #000; }
-.key-btn:active { transform: translateY(4px); box-shadow: none; }
-.display-screen { width: 100%; max-width: 250px; background: #0a0a0a; border: 3px solid #222; color: var(--green); font-family: 'Share Tech Mono'; font-size: 2.5rem; text-align: right; padding: 10px 15px; border-radius: 8px; margin-bottom: 10px; height: 65px; letter-spacing: 5px; }
+/* Cadeado de Combinação (NOVO) */
+.combo-lock { display: flex; gap: 15px; margin: 30px 0; background: #111; padding: 15px; border-radius: 10px; border: 3px solid #000; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+.combo-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.combo-arrow { background: #333; color: #aaa; border: 2px solid #555; border-radius: 5px; width: 50px; height: 40px; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 3px 0 #111; }
+.combo-arrow:active { transform: translateY(3px); box-shadow: none; }
+.combo-digit { font-family: 'Share Tech Mono'; font-size: 3rem; background: #fff; color: #000; width: 50px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 5px; border: inset 3px #aaa; }
 
 /* Switches (Fase 2) */
 .switch-container { display: flex; gap: 20px; margin-top: 20px; }
@@ -90,7 +91,7 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 .switch-knob { width: 50px; height: 50px; background: #666; border-radius: 25px; position: absolute; top: 2px; left: 2px; transition: 0.2s; box-shadow: 0 5px 10px rgba(0,0,0,0.5); }
 .switch.up .switch-knob { top: 2px; background: #888; }
 .switch.down .switch-knob { top: 42px; background: #444; }
-.submit-btn { margin-top: 30px; background: var(--yellow); color: #000; box-shadow: 0 5px 0 #b38f00; max-width: 200px; }
+.submit-btn { margin-top: 20px; background: var(--yellow); color: #000; box-shadow: 0 5px 0 #b38f00; max-width: 200px; }
 
 /* Wires (Fase 3) */
 .wires-container { display: flex; flex-direction: column; gap: 15px; width: 100%; padding: 20px; }
@@ -98,19 +99,17 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 .wire::before, .wire::after { content: ''; position: absolute; top: -5px; width: 15px; height: 35px; background: #111; border: 2px solid #333; }
 .wire::before { left: -10px; border-radius: 5px 0 0 5px; }
 .wire::after { right: -10px; border-radius: 0 5px 5px 0; }
-.wire.cut { opacity: 0.3; pointer-events: none; }
-.wire.cut::part { background: transparent; }
+.wire.cut { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
 
 /* =========================================================
    TELA DO INSTRUTOR (THEME TERMINAL)
 ========================================================= */
 .theme-terminal { background: var(--terminal-bg); color: var(--terminal-green); font-family: 'Share Tech Mono', monospace; }
-/* Efeito de Scanlines e CRT */
 .theme-terminal::after { content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); z-index: 2; background-size: 100% 4px, 6px 100%; pointer-events: none; }
 .terminal-header { display: flex; justify-content: space-between; padding: 15px 20px; border-bottom: 2px solid var(--terminal-green); z-index: 3; position: relative; background: #020802; }
 .terminal-timer { font-size: 2.5rem; text-shadow: 0 0 8px var(--terminal-green); }
 .manual-content { padding: 20px; overflow-y: auto; z-index: 3; position: relative; flex: 1; font-size: 1.1rem; line-height: 1.6; }
-.manual-content h2 { border-bottom: 1px dashed var(--terminal-green); padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; }
+.manual-content h2 { border-bottom: 1px dashed var(--terminal-green); padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; color: #fff; }
 .manual-content ul, .manual-content ol { padding-left: 20px; }
 .manual-content li { margin-bottom: 10px; }
 .blink { animation: blinker 1s linear infinite; }
@@ -134,27 +133,25 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 <div id="screen-lobby" class="screen active">
     <div class="container">
         <h1>DESARME</h1>
-        <p class="subtitle">Comunicação é a chave para sobreviver.</p>
-        
-        <input type="text" id="input-name" placeholder="SEU NOME" maxlength="10">
+        <p class="subtitle">O tempo corre solto, as regras nem sempre.</p>
         
         <div style="background: #1a1a1a; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
             <h3 style="margin-top:0; color:#888; font-family:'Teko';">CRIAR NOVA MISSÃO</h3>
             <select id="select-level">
-                <option value="1">Nível 1: Fácil</option>
-                <option value="2">Nível 2: Médio</option>
-                <option value="3">Nível 3: Difícil</option>
-                <option value="4">Nível 4: Impossível</option>
+                <option value="1">Nível 1: Treinamento Lógico</option>
+                <option value="2">Nível 2: Criptografia Oculta</option>
+                <option value="3">Nível 3: Matemática do Caos</option>
+                <option value="4">Nível 4: Sem Esperança</option>
             </select>
-            <button onclick="createRoom()">CRIAR SALA (DESARMADOR)</button>
+            <button onclick="createRoom()">SOU O DESARMADOR (BOMBA)</button>
         </div>
 
         <div style="text-align: center; margin-bottom: 10px; color:#666;">OU</div>
 
         <div style="background: #1a1a1a; padding: 20px; border-radius: 10px;">
-            <h3 style="margin-top:0; color:#888; font-family:'Teko';">ENTRAR COMO INSTRUTOR</h3>
+            <h3 style="margin-top:0; color:#888; font-family:'Teko';">ENTRAR COMO ESPECIALISTA</h3>
             <input type="text" id="input-code" placeholder="CÓDIGO DA SALA" maxlength="4" style="text-align: center; letter-spacing: 5px; font-size: 1.5rem;">
-            <button onclick="joinRoom()" style="background: var(--blue); box-shadow: 0 5px 0 #0088aa;">CONECTAR MANUAL</button>
+            <button onclick="joinRoom()" style="background: var(--blue); box-shadow: 0 5px 0 #0088aa;">ABRIR MANUAL (INSTRUTOR)</button>
         </div>
     </div>
 </div>
@@ -176,34 +173,35 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
             <span class="strike" id="strike-2">X</span>
             <span class="strike" id="strike-3">X</span>
         </div>
-        <div class="timer-display" id="bomb-timer">00:00</div>
+        <!-- Desarmador não vê o tempo, apenas um aviso -->
+        <div class="timer-display blink" id="bomb-timer">TEMPO: OCULTO</div>
     </div>
     
     <!-- MÓDULO 1: COFRE -->
     <div class="bomb-module" id="module-1" style="display:none;">
-        <div class="module-title">Módulo 1: Trava Numérica</div>
+        <div class="module-title">Módulo 1: Trava de Segurança</div>
         <div class="clue-badge" id="clue-safe"></div>
         
-        <div class="display-screen" id="safe-display"></div>
-        <div class="keypad" id="safe-keypad">
+        <div class="combo-lock" id="safe-combo">
             <!-- Gerado via JS -->
         </div>
+        <button class="submit-btn" onclick="checkSafe()">DESTRAVAR</button>
     </div>
 
     <!-- MÓDULO 2: MALETA -->
     <div class="bomb-module" id="module-2" style="display:none;">
-        <div class="module-title">Módulo 2: Painel Lógico</div>
+        <div class="module-title">Módulo 2: Ponte Lógica</div>
         <div class="clue-badge" id="clue-briefcase"></div>
         
         <div class="switch-container" id="briefcase-switches">
             <!-- Gerado via JS -->
         </div>
-        <button class="submit-btn" onclick="checkBriefcase()">VALIDAR</button>
+        <button class="submit-btn" onclick="checkBriefcase()">VALIDAR CIRCUITO</button>
     </div>
 
     <!-- MÓDULO 3: FIOS -->
     <div class="bomb-module" id="module-3" style="display:none;">
-        <div class="module-title">Módulo 3: Detonador</div>
+        <div class="module-title">Módulo 3: Detonador Central</div>
         <div class="clue-badge" id="clue-wires"></div>
         
         <div class="wires-container" id="bomb-wires">
@@ -215,7 +213,7 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 <!-- TELA INSTRUTOR (MANUAL) -->
 <div id="screen-manual" class="screen theme-terminal">
     <div class="terminal-header">
-        <div>SYS_MANUAL_V4.2</div>
+        <div>SYS_MANUAL_V5.1</div>
         <div class="terminal-timer" id="manual-timer">00:00</div>
     </div>
     <div class="manual-content" id="manual-text">
@@ -233,50 +231,66 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 </div>
 
 <script>
-/* =========================================================
-   CONFIGURAÇÃO DOS NÍVEIS
-========================================================= */
-const LEVELS = {
-    1: { time: 180, name: 'Fácil' },
-    2: { time: 150, name: 'Médio' },
-    3: { time: 120, name: 'Difícil' },
-    4: { time: 90, name: 'Impossível' }
-};
-
 const COLORS = { R: 'var(--red)', G: 'var(--green)', B: 'var(--blue)', Y: 'var(--yellow)', W: '#ffffff', K: '#222' };
+const GREEK_SYMBOLS = ['Ω', 'Δ', 'Φ', 'Σ', 'Ѱ', 'Λ'];
 
 /* ESTADO LOCAL */
 let roomCode = null;
 let roomData = null;
 let myRole = null; 
 let timerInterval = null;
-let localEndTime = 0; // CORREÇÃO: Variável local para o timer
-let currentInput = ""; 
+let localEndTime = 0; 
+let safeState = [0, 0, 0]; // Valores atuais das colunas do cofre
+let safeType = 'numbers'; // 'numbers' ou 'symbols'
 
 /* =========================================================
-   GERAÇÃO DE LÓGICA DO PUZZLE (Só o Defuser cria)
+   GERAÇÃO DE LÓGICA DO PUZZLE ALEATÓRIO
 ========================================================= */
 function generatePuzzleVars(level) {
     const vars = {};
     const rnd = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const rndInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     
+    // Geração de tempo aleatório invisível (mais fácil = mais tempo)
+    if(level == 1) vars.timeAllocated = rndInt(210, 270); // 3.5 a 4.5 mins
+    else if(level == 2) vars.timeAllocated = rndInt(150, 180); // 2.5 a 3 mins
+    else if(level == 3) vars.timeAllocated = rndInt(100, 130); // ~2 mins
+    else if(level == 4) vars.timeAllocated = rndInt(60, 90); // 1 a 1.5 min
+
     if (level == 1) {
-        vars.bat = rnd([1, 2, 3]);
-        vars.wireColorToCut = 'B'; 
+        vars.bat = rnd([2, 3, 4]);
+        vars.safeTarget = `${vars.bat}${vars.bat * 2}${vars.bat - 1}`; 
+        vars.briefcaseTarget = "101"; // Cima, Baixo, Cima
+        vars.wireColors = ['R', 'B', 'Y'].sort(()=>Math.random()-0.5);
+        vars.wireTarget = vars.wireColors.indexOf('Y'); // Cor do sol
     } 
     else if (level == 2) {
         vars.led = rnd(['R', 'B']);
-        vars.wireColors = [rnd(['R','Y']), rnd(['R','Y']), 'B', rnd(['R','Y'])];
+        // Senha: Se R = [Ω(0), Δ(1), Φ(2)]. Se B = [Σ(3), Ѱ(4), Λ(5)].
+        vars.safeTarget = vars.led === 'R' ? '012' : '345';
+        vars.briefcaseTarget = vars.led === 'R' ? '1100' : '0011';
+        vars.wireColors = [rnd(['R','Y']), rnd(['G','Y']), 'B', rnd(['R','G'])].sort(()=>Math.random()-0.5);
+        vars.wireTarget = vars.wireColors.indexOf('B'); 
     }
     else if (level == 3) {
-        vars.serial = rnd(['X7B', 'A99']);
-        vars.word = rnd(['PERIGO', 'FOGO']);
-        vars.wires = ['R','B','G','Y','W'].sort(()=>Math.random()-0.5);
+        vars.sn = rnd([342, 484, 715, 931]);
+        const isEven = vars.sn % 2 === 0;
+        // Par: metade. Impar: invertido.
+        vars.safeTarget = isEven ? (vars.sn / 2).toString().padStart(3,'0') : vars.sn.toString().split('').reverse().join('');
+        
+        vars.word = rnd(['AGUA', 'FOGO']);
+        vars.briefcaseTarget = vars.word === 'AGUA' ? '0110' : '1001';
+        
+        vars.led = rnd(['R', 'G', 'B']); // Luz guia
+        vars.wires = ['R', 'B', 'G', 'Y', 'W'].sort(()=>Math.random()-0.5);
+        vars.wireTarget = isEven ? 2 : 4; // Fio do meio ou último
     }
     else if (level == 4) {
-        vars.code = rnd(['6666', '0000', '1234']);
-        vars.wires = ['K','K','K','K','K','K']; 
-        vars.targetWire = rnd([1, 3, 5]); 
+        vars.code = rnd(['666', '999', '000']);
+        vars.safeTarget = vars.code;
+        vars.briefcaseTarget = "000"; // Todos para baixo
+        vars.wires = ['K','K','K','K','K','K']; // Todos pretos
+        vars.wireTarget = rnd([1, 2, 3, 5]); // Fio correto (primos)
     }
     return vars;
 }
@@ -326,13 +340,10 @@ async function joinRoom() {
         if (data.status === 'waiting') {
             roomCode = code;
             myRole = 'manual';
-            
-            // CORREÇÃO: Atualiza a sala inteira de uma vez para evitar Race Condition
             const updatedData = { ...data, status: 'playing' };
             await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + code), updatedData);
-            
             startListening();
-        } else { alert("Sala em andamento ou fechada."); }
+        } else { alert("Sala já em andamento."); }
     } else { alert("Sala não encontrada."); }
 }
 
@@ -343,10 +354,8 @@ function startListening() {
         roomData = snap.val();
         
         if (roomData.status === 'playing') {
-            
-            // CORREÇÃO: Inicia o cronômetro localmente na hora em que o status muda para "playing"
             if (localEndTime === 0) {
-                localEndTime = Date.now() + (LEVELS[roomData.level].time * 1000);
+                localEndTime = Date.now() + (roomData.vars.timeAllocated * 1000);
             }
 
             if (myRole === 'defuser') {
@@ -366,9 +375,14 @@ function startListening() {
                 }
             }
             
-            if(roomData.phase > oldPhase) {
-                currentInput = "";
-                if(document.getElementById('safe-display')) document.getElementById('safe-display').innerText = "";
+            // Se passou de fase, reinicia os botões visuais (se precisar)
+            if(roomData.phase > oldPhase && myRole === 'defuser') {
+                document.body.classList.add('panic'); // Tremidinha de sucesso
+                document.body.style.borderColor = "var(--green)";
+                setTimeout(()=> {
+                    document.body.classList.remove('panic');
+                    document.body.style.borderColor = "";
+                }, 500);
             }
         }
         else if (roomData.status === 'exploded') endGame(false);
@@ -384,9 +398,7 @@ function sendAction(actionObj) {
    TIMER & GAME OVER
 ========================================================= */
 function updateTimer() {
-    // CORREÇÃO: Checagem segura usando a variável localEndTime
     if(!roomData || roomData.status !== 'playing' || localEndTime === 0) return;
-    
     const left = Math.max(0, localEndTime - Date.now());
     
     if (left === 0) {
@@ -397,19 +409,15 @@ function updateTimer() {
         return;
     }
     
-    const mins = Math.floor(left / 60000);
-    const secs = Math.floor((left % 60000) / 1000);
-    const ms = Math.floor((left % 1000) / 10);
-    
-    const text = (mins>0) ? 
-        `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}` : 
-        `${secs.toString().padStart(2,'0')}:${ms.toString().padStart(2,'0')}`;
-        
-    if(myRole === 'defuser') {
-        const el = document.getElementById('bomb-timer');
-        el.innerText = text;
-        if(left < 30000) el.style.animation = "blinker 0.5s linear infinite";
-    } else {
+    // O desarmador não vê o tempo caindo, apenas o instrutor.
+    if(myRole === 'manual') {
+        const mins = Math.floor(left / 60000);
+        const secs = Math.floor((left % 60000) / 1000);
+        const ms = Math.floor((left % 1000) / 10);
+        const text = (mins>0) ? 
+            `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}` : 
+            `${secs.toString().padStart(2,'0')}:${ms.toString().padStart(2,'0')}`;
+            
         const el = document.getElementById('manual-timer');
         el.innerText = text;
         if(left < 30000) el.style.color = "var(--red)";
@@ -422,17 +430,17 @@ function endGame(win) {
     const msg = document.getElementById('end-msg');
     msg.innerText = win ? 'BOMBA DESARMADA!' : 'BOOM!';
     msg.className = win ? 'win' : 'lose';
-    document.getElementById('end-sub').innerText = win ? 'Missão Cumprida.' : (roomData.reason || 'Sua comunicação falhou.');
+    document.getElementById('end-sub').innerText = win ? 'A cidade está a salvo.' : (roomData.reason || 'Sua comunicação falhou.');
 }
 
 function addStrike() {
     const newStrikes = roomData.strikes + 1;
-    if (newStrikes >= 3) sendAction({ strikes: 3, status: 'exploded', reason: 'Erros demais!' });
+    if (newStrikes >= 3) sendAction({ strikes: 3, status: 'exploded', reason: 'Erros demais ao manipular os módulos!' });
     else sendAction({ strikes: newStrikes });
 }
 
 /* =========================================================
-   LÓGICA DOS PUZZLES (DEFUSER)
+   LÓGICA DA INTERFACE DO DESARMADOR
 ========================================================= */
 function renderBombScreen() {
     [1,2,3].forEach(i => document.getElementById('module-'+i).style.display = 'none');
@@ -442,32 +450,34 @@ function renderBombScreen() {
     const v = roomData.vars;
 
     if (roomData.phase === 1) { 
+        safeType = (roomData.level == 2) ? 'symbols' : 'numbers';
         const badge = document.getElementById('clue-safe');
-        if(roomData.level == 1) badge.innerHTML = `🔋 x${v.bat}`;
-        else if(roomData.level == 2) badge.innerHTML = `LED <div class="led" style="background:${COLORS[v.led]}"></div>`;
-        else if(roomData.level == 3) badge.innerHTML = `SN: ${v.serial}`;
-        else if(roomData.level == 4) badge.innerHTML = `<span class="blink">ERRO SYS</span>`;
         
-        const pad = document.getElementById('safe-keypad');
+        if(roomData.level == 1) badge.innerHTML = `BATERIAS: x${v.bat}`;
+        else if(roomData.level == 2) badge.innerHTML = `Luz <div class="led" style="background:${COLORS[v.led]}"></div>`;
+        else if(roomData.level == 3) badge.innerHTML = `SN: ${v.sn}`;
+        else if(roomData.level == 4) badge.innerHTML = `<span class="blink">OFFLINE</span>`;
+        
+        const pad = document.getElementById('safe-combo');
         if(pad.innerHTML.trim() === "") {
-            let keys = [1,2,3,4,5,6,7,8,9,'C',0,'OK'];
-            if(roomData.level == 2) keys = ['Ω','Ѱ','Δ','Σ','Φ','Λ','Θ','Ξ','Π','C','Ж','OK'];
-            
-            keys.forEach(k => {
-                const btn = document.createElement('button');
-                btn.className = 'key-btn';
-                btn.innerText = k;
-                btn.onclick = () => handleSafeClick(k);
-                pad.appendChild(btn);
-            });
+            for(let i=0; i<3; i++) {
+                const col = document.createElement('div');
+                col.className = 'combo-col';
+                col.innerHTML = `
+                    <div class="combo-arrow" onclick="spinSafe(${i}, 1)">▲</div>
+                    <div class="combo-digit" id="digit-${i}">${safeType === 'numbers' ? '0' : GREEK_SYMBOLS[0]}</div>
+                    <div class="combo-arrow" onclick="spinSafe(${i}, -1)">▼</div>
+                `;
+                pad.appendChild(col);
+            }
         }
     }
     else if (roomData.phase === 2) { 
         const badge = document.getElementById('clue-briefcase');
-        if(roomData.level == 1) badge.innerHTML = 'ENGRENAGENS';
-        else if(roomData.level == 2) badge.innerHTML = 'RGB_SYS';
-        else if(roomData.level == 3) badge.innerHTML = `V_TXT: ${v.word}`;
-        else if(roomData.level == 4) badge.innerHTML = 'MASTER_LOCK';
+        if(roomData.level == 1) badge.innerHTML = 'MODELO: B-43';
+        else if(roomData.level == 2) badge.innerHTML = `SENSOR <div class="led" style="background:${COLORS[v.led]}"></div>`;
+        else if(roomData.level == 3) badge.innerHTML = `TELA: ${v.word}`;
+        else if(roomData.level == 4) badge.innerHTML = 'OVERRIDE_REQ';
         
         const sw = document.getElementById('briefcase-switches');
         if(sw.innerHTML.trim() === "") {
@@ -487,88 +497,61 @@ function renderBombScreen() {
     }
     else if (roomData.phase === 3) { 
         const badge = document.getElementById('clue-wires');
-        badge.innerHTML = 'CUIDADO!';
+        badge.innerHTML = 'CORTE FINAL';
         
         const wc = document.getElementById('bomb-wires');
         if(wc.innerHTML.trim() === "") {
-            let wires = [];
-            if(roomData.level == 1) wires = ['R','B','G'];
-            else if(roomData.level == 2) wires = v.wireColors;
-            else if(roomData.level == 3) wires = v.wires;
-            else if(roomData.level == 4) wires = v.wires;
-
-            wires.forEach((c, idx) => {
+            v.wires.forEach((c, idx) => {
                 const w = document.createElement('div');
                 w.className = 'wire';
                 w.style.background = COLORS[c];
-                w.onclick = () => handleWireCut(w, idx, c);
+                w.onclick = () => handleWireCut(w, idx);
                 wc.appendChild(w);
             });
         }
     }
 }
 
-function handleSafeClick(k) {
-    const disp = document.getElementById('safe-display');
-    if (k === 'C') { currentInput = ""; disp.innerText = ""; return; }
-    if (k === 'OK') {
-        let correct = "";
-        const v = roomData.vars;
-        if(roomData.level == 1) correct = v.bat==1 ? '123' : (v.bat==2 ? '456' : '789');
-        else if(roomData.level == 2) correct = v.led=='R' ? 'ΩΔΦ' : 'ΣѰΩ';
-        else if(roomData.level == 3) correct = v.serial=='X7B' ? '382' : '514';
-        else if(roomData.level == 4) correct = v.code; 
-        
-        if (currentInput === correct) sendAction({ phase: 2 });
-        else { addStrike(); currentInput = ""; disp.innerText = "ERR"; setTimeout(()=>disp.innerText="", 1000); }
-        return;
-    }
-    if (currentInput.length < 5) {
-        currentInput += k;
-        disp.innerText = currentInput;
+// Mecânica do Cadeado Rotativo
+function spinSafe(index, dir) {
+    const max = safeType === 'numbers' ? 9 : (GREEK_SYMBOLS.length - 1);
+    safeState[index] += dir;
+    
+    if (safeState[index] > max) safeState[index] = 0;
+    if (safeState[index] < 0) safeState[index] = max;
+    
+    document.getElementById(`digit-${index}`).innerText = safeType === 'numbers' ? safeState[index] : GREEK_SYMBOLS[safeState[index]];
+}
+
+function checkSafe() {
+    const currentCode = safeState.join('');
+    if (currentCode === roomData.vars.safeTarget) {
+        sendAction({ phase: 2 });
+    } else {
+        addStrike();
     }
 }
 
+// Mecânica da Maleta
 function checkBriefcase() {
     const sws = document.querySelectorAll('.switch');
     let state = Array.from(sws).map(s => s.dataset.pos).join('');
-    let correct = "";
-    const v = roomData.vars;
     
-    if(roomData.level == 1) correct = "101"; 
-    else if(roomData.level == 2) correct = v.led=='R' ? "1100" : "0011";
-    else if(roomData.level == 3) correct = v.word=='PERIGO' ? "1001" : "0110";
-    else if(roomData.level == 4) correct = "111"; 
-    
-    if (state === correct) sendAction({ phase: 3 });
+    if (state === roomData.vars.briefcaseTarget) sendAction({ phase: 3 });
     else addStrike();
 }
 
-function handleWireCut(el, idx, color) {
+// Mecânica dos Fios
+function handleWireCut(el, idx) {
     if(el.classList.contains('cut')) return;
     el.classList.add('cut');
     
-    let isCorrect = false;
-    const v = roomData.vars;
-    
-    if(roomData.level == 1) isCorrect = (color === 'B');
-    else if(roomData.level == 2) {
-        const numYellow = v.wireColors.filter(c=>c==='Y').length;
-        if(numYellow > 1 && idx === v.wireColors.indexOf('Y')) isCorrect = true;
-        else if(numYellow <= 1 && color === 'B') isCorrect = true;
-    }
-    else if(roomData.level == 3) {
-        if(v.serial === 'A99' && idx === 4) isCorrect = true;
-        else if(v.serial !== 'A99' && idx === 2) isCorrect = true;
-    }
-    else if(roomData.level == 4) isCorrect = (idx === v.targetWire);
-    
-    if (isCorrect) sendAction({ status: 'defused' });
+    if (idx === roomData.vars.wireTarget) sendAction({ status: 'defused' });
     else addStrike();
 }
 
 /* =========================================================
-   MANUAL DO INSTRUTOR (HTML ESTÁTICO POR NÍVEL)
+   MANUAL DO INSTRUTOR (DICAS ENIGMÁTICAS)
 ========================================================= */
 function renderManualScreen() {
     const mc = document.getElementById('manual-text');
@@ -577,98 +560,86 @@ function renderManualScreen() {
     
     if (lvl == 1) {
         html = `
-        <h2>NÍVEL 1: INICIAÇÃO</h2>
-        <p>Alerte o desarmador que vocês têm 3 minutos.</p>
+        <h2>NÍVEL 1: TREINAMENTO LÓGICO</h2>
+        <p style="color:var(--yellow)">"Pergunte ao seu parceiro o que ele vê na tela dele. A comunicação salva vidas."</p>
         
-        <h2>MÓDULO 1: COFRE (TRAVA NUMÉRICA)</h2>
-        <p>Pergunte ao desarmador quantas <b>BATERIAS 🔋</b> ele vê fixadas no cofre.</p>
+        <h2>MÓDULO 1: CADEADO (3 DÍGITOS)</h2>
+        <p>A senha matemática depende do número de <b>Baterias</b> expostas na bomba:</p>
         <ul>
-            <li>Se for <b>1 BATERIA</b>: A senha é <b>123</b></li>
-            <li>Se for <b>2 BATERIAS</b>: A senha é <b>456</b></li>
-            <li>Se for <b>3 BATERIAS</b>: A senha é <b>789</b></li>
+            <li>Dígito 1: É exatamente o número de baterias.</li>
+            <li>Dígito 2: É o dobro do primeiro dígito.</li>
+            <li>Dígito 3: É uma unidade a menos que o primeiro dígito.</li>
         </ul>
 
-        <h2>MÓDULO 2: MALETA LÓGICA</h2>
-        <p>Existem 3 alavancas. A posição correta é formar uma <b>"Ponte Quebrada"</b>.</p>
-        <ul>
-            <li>Alavanca Esquerda: <b>PARA CIMA</b></li>
-            <li>Alavanca Central: <b>PARA BAIXO</b></li>
-            <li>Alavanca Direita: <b>PARA CIMA</b></li>
-        </ul>
+        <h2>MÓDULO 2: PONTE LÓGICA (3 ALAVANCAS)</h2>
+        <p>A regra de ouro da mecânica B-43: <i>"Os extremos sempre sobem para proteger o núcleo, que deve permanecer mergulhado no inferno."</i></p>
 
-        <h2>MÓDULO 3: DESARME</h2>
-        <p>Fios visíveis: Vermelho, Azul, Verde.</p>
-        <p><b>Atenção:</b> O fio verde contém ácido e o vermelho aciona a detonação imediata. Corte o <b>FIO AZUL</b>.</p>
+        <h2>MÓDULO 3: CORTE DE FIOS</h2>
+        <p>Existem 3 fios coloridos.</p>
+        <p><b>Diretriz:</b> Nunca confie no verde ácido ou no vermelho sangue. A salvação tem a cor da luz que clareia o dia (Sol).</p>
         `;
     }
     else if (lvl == 2) {
         html = `
-        <h2>NÍVEL 2: SÍMBOLOS</h2>
+        <h2>NÍVEL 2: CRIPTOGRAFIA OCULTA</h2>
         
-        <h2>MÓDULO 1: COFRE (SÍMBOLOS)</h2>
-        <p>Pergunte a cor do <b>LED</b> brilhando no canto do cofre.</p>
+        <h2>MÓDULO 1: CADEADO GREGO</h2>
+        <p>A senha é composta por 3 símbolos e depende da cor da luz (LED) piscando no módulo.</p>
         <ul>
-            <li>LED VERMELHO: Digite Ferradura(Ω), Triângulo(Δ), Zero-Cortado(Φ).</li>
-            <li>LED AZUL: Digite M(Σ), Tridente(Ѱ), Ferradura(Ω).</li>
+            <li>Se a luz for <b>VERMELHA</b>: A senha começa com o símbolo que parece uma Ferradura (Ω). O segundo é um Triângulo (Δ). O último é um círculo cortado ao meio (Φ).</li>
+            <li>Se a luz for <b>AZUL</b>: Comece pelo "M" deitado (Σ). Siga pelo Tridente (Ѱ). Termine com o "V" de cabeça para baixo (Λ).</li>
         </ul>
 
-        <h2>MÓDULO 2: MALETA LÓGICA</h2>
-        <p>Existem 4 alavancas. A senha depende do LED anterior:</p>
+        <h2>MÓDULO 2: PONTE LÓGICA (4 ALAVANCAS)</h2>
+        <p>O fluxo de energia obedece ao mesmo LED do cadeado:</p>
         <ul>
-            <li>Se o LED era VERMELHO: Levante as <b>duas primeiras</b> e baixe as outras.</li>
-            <li>Se o LED era AZUL: Baixe as duas primeiras e <b>levante as duas últimas</b>.</li>
+            <li>Luz Vermelha (Perigo Frio): Desligue as duas alavancas da direita. Mantenha as da esquerda no topo.</li>
+            <li>Luz Azul (Perigo Quente): A energia flui ao contrário. As duas últimas sobem, o resto cai.</li>
         </ul>
 
-        <h2>MÓDULO 3: DESARME (4 FIOS)</h2>
-        <p>Regras de corte (siga a ordem):</p>
-        <ol>
-            <li>Se houver MAIS de UM fio Amarelo, corte o <b>PRIMEIRO FIO AMARELO</b> que aparecer.</li>
-            <li>Caso contrário, corte o <b>FIO AZUL</b>.</li>
-        </ol>
+        <h2>MÓDULO 3: CORTE DE FIOS (4 FIOS)</h2>
+        <p>Atenção à lógica de segurança do protocolo H2:</p>
+        <p>Não confie nas repetições. Procure o único fio cuja cor é o oposto das chamas (Azul) e o corte. Se errar, o sistema inteiro frita.</p>
         `;
     }
     else if (lvl == 3) {
         html = `
-        <h2>NÍVEL 3: MEMÓRIA VOLÁTIL</h2>
+        <h2>NÍVEL 3: MATEMÁTICA DO CAOS</h2>
         
-        <h2>MÓDULO 1: COFRE</h2>
-        <p>Pergunte o <b>Número de Série (SN)</b> colado no cofre.</p>
+        <h2>MÓDULO 1: CADEADO NUMÉRICO</h2>
+        <p>A senha depende do Número de Série (SN) carimbado no módulo:</p>
         <ul>
-            <li>Se o SN for <b>X7B</b>, a senha é <b>382</b>.</li>
-            <li>Se o SN for <b>A99</b>, a senha é <b>514</b>.</li>
+            <li>Se o SN for um <b>NÚMERO PAR</b>: A senha é exatamente a metade desse número. (Adicione um zero à esquerda se der menos de 100).</li>
+            <li>Se o SN for um <b>NÚMERO ÍMPAR</b>: O sistema está invertido. A senha é o próprio SN, mas lido de trás para frente.</li>
         </ul>
 
-        <h2>MÓDULO 2: MALETA</h2>
-        <p>Pergunte a <b>Palavra (V_TXT)</b> mostrada no painel da maleta (4 Alavancas).</p>
+        <h2>MÓDULO 2: PONTE LÓGICA (4 ALAVANCAS)</h2>
+        <p>Há uma palavra projetada na tela do módulo:</p>
         <ul>
-            <li>Se a palavra for <b>PERIGO</b>: Alavancas das PONTAS para cima, as do MEIO para baixo.</li>
-            <li>Se a palavra for <b>FOGO</b>: Alavancas do MEIO para cima, as das PONTAS para baixo.</li>
+            <li>Palavra <b>AGUA</b>: A água se concentra no centro. (Apenas as duas do meio devem ficar para cima).</li>
+            <li>Palavra <b>FOGO</b>: O fogo se espalha pelas pontas. (Apenas as das extremidades devem subir).</li>
         </ul>
 
-        <h2>MÓDULO 3: DESARME (5 FIOS)</h2>
-        <p>Regra de Ouro da Engenharia:</p>
-        <ul>
-            <li>Corte o <b>TERCEIRO</b> fio.</li>
-            <li><b>A MENOS QUE</b> o Serial do Cofre fosse A99. Neste caso, corte o <b>ÚLTIMO</b> fio.</li>
-        </ul>
+        <h2>MÓDULO 3: FIOS DE ALTA TENSÃO (5 FIOS)</h2>
+        <p>Os fios perdem a importância de cor. A posição é tudo. Depende da regra do SN do Módulo 1:</p>
+        <p>Se a regra do cofre dizia que o SN era Par, corte o fio que divide o grupo ao meio (3º). Se era Ímpar, ataque pela retaguarda (o Último fio).</p>
         `;
     }
     else if (lvl == 4) {
         html = `
-        <h2>NÍVEL 4: PANICO NO SISTEMA</h2>
-        <p class="blink" style="color:var(--red)">O TEMPO ESTÁ CURTO. LEIA RÁPIDO.</p>
+        <h2>NÍVEL 4: SEM ESPERANÇA</h2>
+        <p class="blink" style="color:var(--red); font-size:1.5rem;">FALHA CRÍTICA NO SENSOR. LEIA RÁPIDO.</p>
         
-        <h2>MÓDULO 1: COFRE</h2>
-        <p>O visor diz ERRO SYS. Diga para ele testar e apertar OK nestas senhas genéricas de fábrica em ordem, até uma funcionar:</p>
-        <p><b>1234</b>, depois <b>0000</b>, depois <b>6666</b>.</p>
+        <h2>MÓDULO 1: OFFLINE</h2>
+        <p>O visor do módulo está quebrado. Sistemas auxiliares sugerem tentar as combinações repetidas dos anjos (999), da besta (666) ou do vazio absoluto (000). Teste até abrir.</p>
 
-        <h2>MÓDULO 2: MALETA</h2>
-        <p>São 3 alavancas. Coloque <b>TODAS PARA CIMA</b>. É um sistema Override.</p>
+        <h2>MÓDULO 2: MANUAL OVERRIDE</h2>
+        <p>Todas as 3 chaves de segurança entraram em curto. Para forçar a quebra do firewall, <b>todas devem apontar para as trevas (Baixo)</b>.</p>
 
-        <h2>MÓDULO 3: DESARME (FIOS CEGOS)</h2>
-        <p>Todos os 6 fios são PRETOS. A contagem é da esquerda para a direita (1 a 6).</p>
-        <p>A resposta certa é totalmente aleatória e imprevisível pelas minhas notas. O fio correto é...</p>
-        <p>Espera... os sensores dizem que o sistema ativou o fio <b>2, 4 ou 6</b> (um dos pares). Mande ele chutar com cuidado!</p>
+        <h2>MÓDULO 3: CORTE CEGO (6 FIOS PRETOS)</h2>
+        <p>Os criadores da bomba pintaram todos os 6 fios de preto para confundir o esquadrão. Numerados da esquerda para a direita (1 a 6).</p>
+        <p>Nossos scanners não conseguem penetrar a blindagem, mas detectamos uma assinatura. A energia vital flui apenas pelos caminhos puros.</p>
+        <p><b>O fio correto é obrigatoriamente um Número Primo (2, 3 ou 5).</b> Escolha o seu deus, feche os olhos e mande ele cortar.</p>
         `;
     }
     
