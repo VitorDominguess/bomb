@@ -111,7 +111,7 @@ button:active { transform: translateY(5px); box-shadow: 0 0 0 #990000; }
 .terminal-timer { font-size: 2.5rem; text-shadow: 0 0 8px var(--terminal-green); }
 .manual-content { padding: 20px; overflow-y: auto; z-index: 3; position: relative; flex: 1; font-size: 1.1rem; line-height: 1.6; }
 .manual-content h2 { border-bottom: 1px dashed var(--terminal-green); padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; }
-.manual-content ul { padding-left: 20px; }
+.manual-content ul, .manual-content ol { padding-left: 20px; }
 .manual-content li { margin-bottom: 10px; }
 .blink { animation: blinker 1s linear infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
@@ -248,9 +248,10 @@ const COLORS = { R: 'var(--red)', G: 'var(--green)', B: 'var(--blue)', Y: 'var(-
 /* ESTADO LOCAL */
 let roomCode = null;
 let roomData = null;
-let myRole = null; // 'defuser' ou 'manual'
+let myRole = null; 
 let timerInterval = null;
-let currentInput = ""; // Para o cofre
+let localEndTime = 0; // CORREÇÃO: Variável local para o timer
+let currentInput = ""; 
 
 /* =========================================================
    GERAÇÃO DE LÓGICA DO PUZZLE (Só o Defuser cria)
@@ -261,7 +262,7 @@ function generatePuzzleVars(level) {
     
     if (level == 1) {
         vars.bat = rnd([1, 2, 3]);
-        vars.wireColorToCut = 'B'; // Fixo no nivel 1
+        vars.wireColorToCut = 'B'; 
     } 
     else if (level == 2) {
         vars.led = rnd(['R', 'B']);
@@ -274,8 +275,8 @@ function generatePuzzleVars(level) {
     }
     else if (level == 4) {
         vars.code = rnd(['6666', '0000', '1234']);
-        vars.wires = ['K','K','K','K','K','K']; // Todos pretos
-        vars.targetWire = rnd([1, 3, 5]); // Fio correto (index 0-5)
+        vars.wires = ['K','K','K','K','K','K']; 
+        vars.targetWire = rnd([1, 3, 5]); 
     }
     return vars;
 }
@@ -305,7 +306,6 @@ async function createRoom() {
         level: lvl,
         strikes: 0,
         phase: 1,
-        expiresAt: 0, // Setado quando o instrutor entrar
         vars: generatePuzzleVars(lvl)
     };
     
@@ -326,10 +326,11 @@ async function joinRoom() {
         if (data.status === 'waiting') {
             roomCode = code;
             myRole = 'manual';
-            // Start game!
-            const expiresAt = Date.now() + (LEVELS[data.level].time * 1000);
-            await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + code + '/status'), 'playing');
-            await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + code + '/expiresAt'), expiresAt);
+            
+            // CORREÇÃO: Atualiza a sala inteira de uma vez para evitar Race Condition
+            const updatedData = { ...data, status: 'playing' };
+            await window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + code), updatedData);
+            
             startListening();
         } else { alert("Sala em andamento ou fechada."); }
     } else { alert("Sala não encontrada."); }
@@ -342,6 +343,12 @@ function startListening() {
         roomData = snap.val();
         
         if (roomData.status === 'playing') {
+            
+            // CORREÇÃO: Inicia o cronômetro localmente na hora em que o status muda para "playing"
+            if (localEndTime === 0) {
+                localEndTime = Date.now() + (LEVELS[roomData.level].time * 1000);
+            }
+
             if (myRole === 'defuser') {
                 showScreen('screen-bomb');
                 renderBombScreen();
@@ -351,7 +358,6 @@ function startListening() {
             }
             if(!timerInterval) timerInterval = setInterval(updateTimer, 100);
             
-            // Toca efeito se errou
             if (roomData.strikes > 0) {
                 document.getElementById('strike-' + roomData.strikes).classList.add('active');
                 if(myRole === 'defuser') {
@@ -360,7 +366,6 @@ function startListening() {
                 }
             }
             
-            // Limpa input se mudou de fase
             if(roomData.phase > oldPhase) {
                 currentInput = "";
                 if(document.getElementById('safe-display')) document.getElementById('safe-display').innerText = "";
@@ -372,7 +377,6 @@ function startListening() {
 }
 
 function sendAction(actionObj) {
-    // Usado pelo Defuser para atualizar fase ou strikes
     window.__fb.set(window.__fb.ref(window.__fb.db, 'rooms/' + roomCode), { ...roomData, ...actionObj });
 }
 
@@ -380,12 +384,16 @@ function sendAction(actionObj) {
    TIMER & GAME OVER
 ========================================================= */
 function updateTimer() {
-    if(!roomData || roomData.status !== 'playing') return;
-    const left = Math.max(0, roomData.expiresAt - Date.now());
+    // CORREÇÃO: Checagem segura usando a variável localEndTime
+    if(!roomData || roomData.status !== 'playing' || localEndTime === 0) return;
+    
+    const left = Math.max(0, localEndTime - Date.now());
     
     if (left === 0) {
         clearInterval(timerInterval);
-        if (myRole === 'defuser') sendAction({ status: 'exploded', reason: 'Tempo esgotado!' });
+        if (myRole === 'defuser' && roomData.status === 'playing') {
+            sendAction({ status: 'exploded', reason: 'Tempo esgotado!' });
+        }
         return;
     }
     
@@ -427,14 +435,13 @@ function addStrike() {
    LÓGICA DOS PUZZLES (DEFUSER)
 ========================================================= */
 function renderBombScreen() {
-    // Esconde todos
     [1,2,3].forEach(i => document.getElementById('module-'+i).style.display = 'none');
     
     const m = document.getElementById('module-' + roomData.phase);
     m.style.display = 'flex';
     const v = roomData.vars;
 
-    if (roomData.phase === 1) { // COFRE
+    if (roomData.phase === 1) { 
         const badge = document.getElementById('clue-safe');
         if(roomData.level == 1) badge.innerHTML = `🔋 x${v.bat}`;
         else if(roomData.level == 2) badge.innerHTML = `LED <div class="led" style="background:${COLORS[v.led]}"></div>`;
@@ -455,7 +462,7 @@ function renderBombScreen() {
             });
         }
     }
-    else if (roomData.phase === 2) { // MALETA
+    else if (roomData.phase === 2) { 
         const badge = document.getElementById('clue-briefcase');
         if(roomData.level == 1) badge.innerHTML = 'ENGRENAGENS';
         else if(roomData.level == 2) badge.innerHTML = 'RGB_SYS';
@@ -468,7 +475,7 @@ function renderBombScreen() {
             for(let i=0; i<numSwitches; i++) {
                 const w = document.createElement('div');
                 w.className = 'switch down';
-                w.dataset.pos = '0'; // 0 = down, 1 = up
+                w.dataset.pos = '0'; 
                 w.innerHTML = '<div class="switch-knob"></div>';
                 w.onclick = () => {
                     w.classList.toggle('up'); w.classList.toggle('down');
@@ -478,7 +485,7 @@ function renderBombScreen() {
             }
         }
     }
-    else if (roomData.phase === 3) { // FIOS
+    else if (roomData.phase === 3) { 
         const badge = document.getElementById('clue-wires');
         badge.innerHTML = 'CUIDADO!';
         
@@ -501,7 +508,6 @@ function renderBombScreen() {
     }
 }
 
-// Interações do Defuser
 function handleSafeClick(k) {
     const disp = document.getElementById('safe-display');
     if (k === 'C') { currentInput = ""; disp.innerText = ""; return; }
@@ -511,7 +517,7 @@ function handleSafeClick(k) {
         if(roomData.level == 1) correct = v.bat==1 ? '123' : (v.bat==2 ? '456' : '789');
         else if(roomData.level == 2) correct = v.led=='R' ? 'ΩΔΦ' : 'ΣѰΩ';
         else if(roomData.level == 3) correct = v.serial=='X7B' ? '382' : '514';
-        else if(roomData.level == 4) correct = v.code; // '6666' etc
+        else if(roomData.level == 4) correct = v.code; 
         
         if (currentInput === correct) sendAction({ phase: 2 });
         else { addStrike(); currentInput = ""; disp.innerText = "ERR"; setTimeout(()=>disp.innerText="", 1000); }
@@ -529,10 +535,10 @@ function checkBriefcase() {
     let correct = "";
     const v = roomData.vars;
     
-    if(roomData.level == 1) correct = "101"; // Up, Down, Up
+    if(roomData.level == 1) correct = "101"; 
     else if(roomData.level == 2) correct = v.led=='R' ? "1100" : "0011";
     else if(roomData.level == 3) correct = v.word=='PERIGO' ? "1001" : "0110";
-    else if(roomData.level == 4) correct = "111"; // Tudo cima
+    else if(roomData.level == 4) correct = "111"; 
     
     if (state === correct) sendAction({ phase: 3 });
     else addStrike();
